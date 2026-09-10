@@ -3,8 +3,8 @@
    two entries to sound like engineering rather than design.
    Preview: cv.html?role=engineering */
 window.CV.variants.engineering = {
-  group: "Roles",                       // buckets the dev-only variant switcher
-  label: "Design Engineer",             // shown in that switcher
+  group: "Roles",                       // groups this cut in the left-hand Cuts panel
+  label: "Design Engineer",             // what that panel calls it
   tagline: "Design Engineer × Real-Time Systems × Front-End Craft",
   cover: "banner",                      // slim page-1 strip instead of a full cover page
   hideFooter: true,

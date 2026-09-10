@@ -6,7 +6,6 @@ window.CV.variants.research = {
   group: "Roles",
   label: "Researcher",
   tagline: "Interaction Research × Evaluation × Prototyping",
-  // No `cover` here, so this one keeps the full cover page — academic CVs can breathe.
   hideLinks: false,
 
   tracks: ["research", "design", "teaching"],

@@ -10,14 +10,15 @@
 <style>
   :root{
     --ink:#111110; --paper:#f7f6f2; --muted:#76746c; --faint:#9b998f; --rule:#e3e1d8;
+    --rail:#eae8e0;                         /* cuts panel: one step down from paper */
     --accent:#ff352a;                       /* default accent */
     --display:"Space Grotesk","Arial Narrow",sans-serif;
     --mono:"Space Mono","Courier New",monospace;
     --serif:"Newsreader",Georgia,serif;
     --maxw:940px;
   }
-  body.theme-chanel{ --paper:#faf9f6; --accent:#8c7853; }   /* Chanel: warm paper + gold */
-  body.theme-warm{ --paper:#faf9f6; --accent:#b5895a; }     /* warm paper + amber (matches the site video) */
+  body.theme-chanel{ --paper:#faf9f6; --rail:#eeece4; --accent:#8c7853; }   /* Chanel: warm paper + gold */
+  body.theme-warm{ --paper:#faf9f6; --rail:#efece3; --accent:#b5895a; }     /* warm paper + amber */
   /* optional full-screen video hero (set heroVideo in the data file) */
   .herovideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.06; z-index:1;}
   body.has-video #art{opacity:0;}     /* video shows on screen; canvas stays sized for print fallback */
@@ -33,37 +34,134 @@
   .toolbar button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
   .backlink{position:fixed; top:16px; left:16px; z-index:50; font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:rgba(17,17,16,.82); color:#f7f6f2; text-decoration:none; padding:9px 12px; border-radius:2px; backdrop-filter:blur(6px); transition:background .15s ease;}
   .backlink:hover{background:var(--ink);}
+  /* The cuts rail owns the top-left corner, so the optional back link steps aside:
+     clear of the open panel, or clear of the launcher when it's collapsed. */
+  body.has-cuts .backlink{left:280px;}
+  body.has-cuts.cuts-collapsed .backlink{left:82px;}
 
-  /* dev-only variant switcher (localhost or ?dev) — never renders on the live site.
-     Launcher button + searchable popover panel; scales to ~20 grouped variants. */
-  .devswitch{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:60; font-family:var(--mono);}
-  .devswitch__toggle{display:flex; align-items:center; gap:8px; cursor:pointer; border:none;
-    background:rgba(17,17,16,.86); padding:8px 14px; border-radius:4px; backdrop-filter:blur(6px);
-    font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#cfcdc4;
-    transition:color .15s ease;}
-  .devswitch__toggle:hover{color:#fff;}
-  .devswitch__toggle .lbl{color:#76746c; letter-spacing:.12em;}
-  .devswitch__toggle .cur{color:#f4f2ea;}
-  .devswitch__toggle .caret{color:#76746c; font-size:8px; transition:transform .15s ease;}
-  .devswitch.open .devswitch__toggle .caret{transform:rotate(180deg);}
-  .devswitch__panel{display:none; position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%);
-    width:300px; max-width:calc(100vw - 32px); max-height:62vh; overflow:auto;
-    background:rgba(17,17,16,.94); border-radius:6px; padding:8px; backdrop-filter:blur(8px);
-    box-shadow:0 12px 44px rgba(0,0,0,.45);}
-  .devswitch.open .devswitch__panel{display:block;}
-  .devswitch__search{width:100%; box-sizing:border-box; margin-bottom:6px; outline:none;
-    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:3px;
-    color:#f4f2ea; font-family:var(--mono); font-size:11px; letter-spacing:.02em; padding:7px 9px;}
-  .devswitch__search:focus{border-color:rgba(255,255,255,.28);}
-  .devswitch__search::placeholder{color:#6f6d65;}
-  .devswitch__group{font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
-    color:#76746c; padding:9px 8px 4px;}
-  .devswitch__panel a{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.03em;
-    color:#cfcdc4; text-decoration:none; padding:6px 9px; border-radius:3px;
+  /* ── cuts panel ───────────────────────────────────────────────────────────────
+     A quiet left rail listing every cut. Built from the page's own materials —
+     paper, a hairline rule, mono labels — so it reads as part of the document
+     rather than as app chrome bolted on. Never printed.
+     Below 1340px there isn't room beside the centred page, so it collapses to a
+     small launcher and slides over. */
+  .cuts{position:fixed; left:0; top:0; bottom:0; width:264px; z-index:60;
+    padding:26px 18px 20px; overflow-y:auto; box-sizing:border-box;
+    display:flex; flex-direction:column;
+    background:var(--rail); border-right:1px solid var(--rule); font-family:var(--mono);}
+  .cuts__head{display:flex; align-items:center; justify-content:space-between;
+    font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--faint);
+    padding:0 8px 12px;}
+  .cuts__min{border:none; background:none; cursor:pointer; color:var(--faint); padding:0 0 0 8px;
+    font-family:var(--mono); font-size:13px; line-height:1;}
+  .cuts__min:hover{color:var(--ink);}
+  /* Group headings carry a rule so the eye finds the breaks before it reads the words —
+     with a dozen cuts the list is scanned, not read. */
+  .cuts__group{font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted);
+    padding:9px 8px 6px; margin-top:12px; border-top:1px solid var(--rule);}
+  .cuts a{display:block; font-size:11px; letter-spacing:.01em; line-height:1.3;
+    color:var(--muted); text-decoration:none; padding:5px 8px; border-radius:2px;
     transition:background .12s ease, color .12s ease;}
-  .devswitch__panel a:hover{color:#fff; background:rgba(255,255,255,.08);}
-  .devswitch__panel a.active{background:#f7f6f2; color:#111110;}
-  .devswitch__empty{display:none; color:#6f6d65; font-size:10.5px; padding:8px 9px;}
+  .cuts a + a{margin-top:1px;}
+  .cuts a:hover{color:var(--ink); background:rgba(17,17,16,.05);}
+  .cuts a.active{color:var(--ink); background:rgba(17,17,16,.07); font-weight:700;}
+
+  /* collapsed on purpose, at any width */
+  body.cuts-collapsed .cuts{transform:translateX(-100%); transition:transform .2s ease;}
+  body.cuts-collapsed .cuts__open{display:block;}
+  .cuts__actions{margin-top:14px; padding-top:12px; border-top:1px solid var(--rule); display:flex;
+    flex-direction:column; gap:2px;}
+  .cuts__act{display:block; width:100%; text-align:left; border:none; background:none; cursor:pointer;
+    font-family:var(--mono); font-size:11px; letter-spacing:.02em; color:var(--muted);
+    padding:6px 8px; border-radius:2px; transition:background .12s ease, color .12s ease;}
+  .cuts__act:hover{color:var(--ink); background:rgba(17,17,16,.05);}
+  .cuts__foot{margin-top:auto; padding:14px 8px 0; border-top:1px solid var(--rule);}
+  .cuts__hint{font-size:9.5px; line-height:1.55; color:var(--faint);}
+  .cuts__hint code{font-family:var(--mono); color:var(--muted);}
+  .cuts__link{display:inline-block; margin-top:9px; font-size:10px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); text-decoration:none;
+    border-bottom:1px solid var(--rule); padding:0 0 1px;}
+  .cuts__link:hover{color:var(--ink); border-bottom-color:var(--ink);}
+  /* says out loud whether the cut buttons can write files, so nobody wonders why the
+     button is called "Download starter file" */
+  .cuts__mode{display:flex; align-items:center; gap:6px; margin-top:12px;
+    font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--faint);}
+  .cuts__mode::before{content:""; width:5px; height:5px; border-radius:50%;
+    background:var(--faint); flex:0 0 auto;}
+  .cuts__mode.on::before{background:#5a9c6b;}
+  .cuts__mode.on{color:var(--muted);}
+  .cuts__close{display:none;}
+
+  /* dialog for the two things a static page genuinely can do: build you a starter file,
+     and write the instruction you'd otherwise have to remember. */
+  .rc{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
+    background:rgba(17,17,16,.42); padding:20px;}
+  .rc__card{width:100%; max-width:460px; background:var(--paper); border-radius:4px; padding:22px;
+    box-shadow:0 20px 60px rgba(0,0,0,.28); font-family:var(--mono);}
+  .rc__title{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
+    margin:0 0 14px;}
+  .rc label{display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--faint); margin:12px 0 5px;}
+  .rc input, .rc textarea{width:100%; box-sizing:border-box; font-family:var(--mono); font-size:12px;
+    color:var(--ink); background:#fff; border:1px solid var(--rule); border-radius:2px; padding:8px 9px;
+    outline:none;}
+  .rc input:focus, .rc textarea:focus{border-color:var(--muted);}
+  .rc textarea{min-height:84px; resize:vertical; line-height:1.45;}
+  .rc__note{font-size:10px; line-height:1.6; color:var(--muted); margin:14px 0 0;}
+  .rc__note code{background:rgba(17,17,16,.06); padding:1px 5px; border-radius:2px;}
+  .rc__row{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap;}
+  .rc__btn{flex:1 1 auto; border:none; cursor:pointer; font-family:var(--mono); font-size:10px;
+    letter-spacing:.08em; text-transform:uppercase; padding:10px 12px; border-radius:2px;
+    background:var(--ink); color:var(--paper);}
+  .rc__btn--ghost{background:none; color:var(--muted); border:1px solid var(--rule);}
+  .rc__btn--ghost:hover{color:var(--ink); border-color:var(--muted);}
+
+  /* collapsed mode: launcher pill, panel slides over the page */
+  .cuts__open{position:fixed; left:16px; top:16px; z-index:59; display:none; cursor:pointer; border:none;
+    font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+    background:rgba(17,17,16,.82); color:#f7f6f2; padding:9px 12px; border-radius:2px;
+    backdrop-filter:blur(6px);}
+  .cuts__open:hover{background:var(--ink);}
+  /* 940px page + two 264px rails = 1468; 1500 keeps a gutter before it has to collapse */
+  @media (max-width:1500px){
+    .cuts{transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 0 40px rgba(0,0,0,.14);}
+    body.cuts-open .cuts{transform:none;}
+    .cuts__open{display:block;}
+    body.cuts-open .cuts__open{display:none;}
+    .cuts__close{display:block; position:absolute; right:10px; top:10px; border:none; background:none;
+      cursor:pointer; color:var(--faint); font-family:var(--mono); font-size:14px; line-height:1; padding:4px;}
+    .cuts__close:hover{color:var(--ink);}
+    .cuts__min{display:none;}                 /* narrow screens already have ✕ */
+    body.has-cuts .backlink{left:82px;}
+    body.has-cuts.cuts-open .backlink{left:280px;}
+  }
+
+  /* first-run strip — only while the example data is still in place. Removes itself
+     the moment someone puts their own name in cv-data.js. */
+  .firstrun{position:fixed; left:0; right:0; bottom:0; z-index:70; display:flex; align-items:center;
+    gap:14px; padding:11px 16px; background:var(--ink); color:#f4f2ea;
+    font-family:var(--mono); font-size:11px; letter-spacing:.02em; line-height:1.45;}
+  .firstrun code{color:#fff; background:rgba(255,255,255,.12); padding:1px 5px; border-radius:2px;}
+  .firstrun span{flex:1;}
+  .firstrun button{flex:0 0 auto; border:none; background:rgba(255,255,255,.14); color:#f4f2ea;
+    font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+    padding:7px 11px; border-radius:2px; cursor:pointer;}
+  .firstrun button:hover{background:rgba(255,255,255,.24);}
+
+  /* ── changing cuts ────────────────────────────────────────────────────────────
+     Switching cut is a real page load, which flashes white. Fade the document out
+     before navigating and let it rise back in on arrival, so a cut reads as a change
+     of state rather than a reload. The rail itself never moves — it's the fixed thing
+     the document changes behind. Print and reduced-motion opt out below. */
+  .hero, main, footer{transition:opacity .19s ease;}
+  body.leaving .hero, body.leaving main, body.leaving footer{opacity:0;}
+  @keyframes cutRise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
+  @keyframes cutFade{from{opacity:0;} to{opacity:1;}}
+  body:not(.paged-ready) main{animation:cutRise .38s cubic-bezier(.22,1,.36,1) both;}
+  body:not(.paged-ready) .hero{animation:cutFade .45s ease both;}
+  .cuts a{position:relative;}
+  .cuts a.active::before{content:""; position:absolute; left:0; top:6px; bottom:6px; width:2px;
+    background:var(--accent); animation:cutFade .3s ease both;}
 
   /* hero */
   .hero{position:relative; background:#000; color:#fff; overflow:hidden;}
@@ -138,7 +236,11 @@
     .row{grid-template-columns:1fr auto;} .row .when{grid-column:1 / -1;}
     .skills{grid-template-columns:1fr;}
   }
-  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none;} }
+  @media (prefers-reduced-motion:reduce){
+    .reveal{opacity:1; transform:none; transition:none;}
+    .hero, main, footer{transition:none;}
+    body:not(.paged-ready) main, body:not(.paged-ready) .hero, .cuts a.active::before{animation:none;}
+  }
 
   /* ── Paged.js download mode (on-demand pagination — see exportPDF() in the script) ──
      When the user hits "Save PDF", Paged.js paginates a clone of the CV into real .pagedjs_page
@@ -157,7 +259,8 @@
   /* print fallback: if Paged.js can't load we still get a usable native print (no @page here so
      Paged.js's own injected @page wins in the paged path; the cover stays full-cover via .hero). */
   @media print{
-    .toolbar,.backlink,.devswitch{display:none !important;}
+    .toolbar,.backlink,.cuts,.cuts__open,.firstrun{display:none !important;}
+    .hero,main,footer{opacity:1 !important; animation:none !important; transition:none !important;}
     body{background:#fff; display:flex; flex-direction:column; min-height:100vh;}
     footer{margin-top:auto; padding:10px 0 0; border-top:1px solid var(--rule);}  /* pin to bottom of last page */
     .hero{page:cover; break-after:page; page-break-after:always; background:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
@@ -199,6 +302,184 @@
     body.cover-banner main > section:first-child{padding-top:18px;}
   }
 </style>
+
+<!-- ── PRINT STYLESHEET ────────────────────────────────────────────────────────────
+     This lives inline, in a <script type="text/css"> the browser never executes and
+     never applies, because Paged.js loads its stylesheets with fetch() — and browsers
+     block fetch() of local files on a file:// page. Keeping the CSS in the document and
+     handing Paged.js a blob: URL (see printStylesheets()) means you can double-click
+     cv.html and still get a proper PDF, with no local server and no terminal.
+
+     Every rule is scoped to .pagedjs_page, so nothing here can affect the screen view.
+     Colour and type tokens (--ink, --mono, …) come from :root above and resolve as-is. -->
+<script type="text/css" id="print-css">
+/* ── every body page ─────────────────────────────────────────────────────────── */
+@page {
+  size: Letter;
+  margin: 0.5in 0.6in 0.55in;
+
+  @top-center {
+    content: string(cvname);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    color: var(--faint);
+  }
+}
+
+/* the running header reads its text from a zero-height source injected at the top of the flow */
+.cv-runhead {
+  string-set: cvname content(text);
+  font-size: 0 !important;
+  line-height: 0 !important;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  color: transparent;
+}
+
+/* ── named cover page: full bleed, no header / no folio ──────────────────────── */
+.pagedjs_page .hero { page: cover; }
+@page cover {
+  margin: 0;
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+@page :blank {
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+/* never repeat the name in the running header on page one — the cover already shows it */
+@page :first {
+  @top-center { content: none; }
+}
+
+/* ── cover: fill the page, keep the generative art (snapshotted to an <img>) ──── */
+.pagedjs_page .hero {
+  position: relative;
+  height: 100%;
+  background: #000 !important;
+  color: #fff;
+  overflow: hidden;
+  break-after: page;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pagedjs_page .hero .art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.pagedjs_page .hero-inner {
+  height: 100%;
+  min-height: 0;
+  padding: 0.8in 0.75in;
+  justify-content: flex-end;
+}
+.pagedjs_page .name { font-size: 3.4rem; }
+.pagedjs_page .herovideo { display: none !important; }
+
+/* ── banner cover (variant cover:"banner") ───────────────────────────────────────
+   A slim header strip at the top of page one instead of a full cover page: the body
+   flows in right underneath, and folios + the running header appear on every page. */
+body.cover-banner .pagedjs_page .hero {
+  page: auto;
+  height: auto;
+  min-height: 0;
+  width: auto;
+  break-after: avoid;
+  break-inside: avoid;
+  margin: 0 0 16px;
+}
+body.cover-banner .pagedjs_page .hero-inner {
+  height: auto;
+  min-height: 0;
+  padding: 16px 22px;
+  justify-content: flex-end;
+}
+body.cover-banner .pagedjs_page .name { font-size: 1.6rem; }
+body.cover-banner .pagedjs_page .tagline { margin-top: 8px; }
+body.cover-banner .pagedjs_page .colophon { margin-top: 10px; gap: 3px 36px; }
+
+/* ATS: Chrome paints a text-shadow by writing the glyph run TWICE into the PDF content
+   stream, so every shadowed string extracts as "EMAILEMAIL you@example.comyou@example.com"
+   and resume parsers store an invalid address. The shadow only ever existed to lift type
+   off the hero artwork, which print drops anyway. Run `npm run ats-check` to see it. */
+.pagedjs_page .tagline,
+.pagedjs_page .colophon { text-shadow: none; }
+body.cover-banner .pagedjs_page .profile { margin-top: 8px; font-size: 0.92rem; }
+body.cover-banner .pagedjs_page main > section:first-child { padding-top: 4px; }
+
+/* ── body: tight, book-like vertical rhythm ──────────────────────────────────── */
+.pagedjs_page main { padding: 0; }
+.pagedjs_page section { padding-top: 6px; }
+/* headerless cut (hideHero): drop the top rule / gap above the first section */
+body.no-hero .pagedjs_page main > section:first-child { padding-top: 0; }
+body.no-hero .pagedjs_page main > section:first-child .sec-head { border-top: none; padding-top: 0; }
+.pagedjs_page .sec-head {
+  break-after: avoid;
+  page-break-after: avoid;
+  margin-bottom: 5px;
+  padding-top: 4px;
+}
+.pagedjs_page .entry,
+.pagedjs_page .row { break-inside: avoid; page-break-inside: avoid; }
+
+/* An orphaned section heading ("Experience" alone at the foot of page 1) is the classic
+   Paged.js miss: it applies break-after:avoid inconsistently. Asserting break-before:avoid
+   on whatever follows the heading pushes the pair over together. */
+.pagedjs_page .sec-head + .entry,
+.pagedjs_page .sec-head + .row,
+.pagedjs_page .sec-head + .skills,
+.pagedjs_page .sec-head + .tags,
+.pagedjs_page .sec-head + * { break-before: avoid; page-break-before: avoid; }
+/* built by buildPrintContent(): heading + its first entry, wrapped so they travel together */
+.pagedjs_page .sec-keep { break-inside: avoid; page-break-inside: avoid; }
+
+/* The date column was 128px + 22px gutter for a string ("2024 — Present") that needs ~102px
+   in 11.5px mono. Tightening it widens the text column ~5%, which removes wrapped lines
+   throughout without touching a word. nowrap guarantees a date can never break in two. */
+.pagedjs_page .entry { padding-bottom: 3px; gap: 0 18px; grid-template-columns: 106px 1fr; }
+.pagedjs_page .entry .when { white-space: nowrap; padding-top: 2px; }
+.pagedjs_page .entry .role { margin-bottom: 1px; font-size: 0.98rem; }
+.pagedjs_page .entry .desc { font-size: 0.88rem; line-height: 1.28; max-width: none; }
+.pagedjs_page .entry .desc-list { font-size: 0.88rem; line-height: 1.25; max-width: none; padding-left: 13px; }
+.pagedjs_page .entry .desc-list li { margin-top: 0; }
+.pagedjs_page .tags { margin-top: 3px; }
+.pagedjs_page .row { padding: 2px 0; }
+.pagedjs_page .skills { gap: 6px 36px; }
+.pagedjs_page .skill .val { font-size: 0.92rem; }
+.pagedjs_page .prose { font-size: 0.95rem; line-height: 1.35; }
+
+/* links print as ink; project chips lose their loud accent border */
+.pagedjs_page a { color: inherit; }
+.pagedjs_page .projlink { border-color: #bbb !important; color: #555 !important; }
+
+/* reveal-on-scroll is a screen affordance — force everything visible in the PDF */
+.pagedjs_page .reveal { opacity: 1 !important; transform: none !important; }
+
+/* footer flows at the end of the last page (not pinned) */
+.pagedjs_page footer { padding: 12px 0 0; border-top: 1px solid var(--rule); }
+
+/* never paginate the screen-only chrome */
+.pagedjs_page .toolbar,
+.pagedjs_page .cuts,
+.pagedjs_page .cuts__open,
+.pagedjs_page .firstrun,
+.pagedjs_page .backlink { display: none !important; }
+</script>
+
 <!-- Paged.js (web-to-print). auto:false → it never runs on page load; exportPDF() invokes it on demand. -->
 <script>window.PagedConfig = { auto: false };</script>
 <script defer src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
@@ -229,15 +510,26 @@
   // Load the master data file, then the per-variant files it lists in
   // CV.variantManifest (each registers into CV.variants), THEN render.
   // A variant file that fails to load is skipped — the full CV still works.
+  /* Your real résumé belongs in cv-data.local.js, which .gitignore excludes — so you can
+     use this daily without your phone number and every company you're applying to landing
+     in a public repo. If that file exists it wins; otherwise the shipped example renders.
+     ?data=whatever.js overrides both. */
   var params = new URLSearchParams(location.search);
-  var dataFile = params.get('data') || 'cv-data.js';
+  var explicit = params.get('data');
+  var dataFile = explicit || 'cv-data.local.js';
   function loadScript(src, onload, onerror){
     var s = document.createElement('script');
     s.src = src; s.onload = onload; if(onerror) s.onerror = onerror;
     document.head.appendChild(s);
   }
   function loadVariantsThenInit(){
+    window.__CV_DATAFILE__ = dataFile;      // what actually loaded, for the write API
     var CV = window.CV || {};
+    // Variant files register themselves with `window.CV.variants.<key> = {...}`, which
+    // throws if the key doesn't exist — and a throwing script still fires onload, so the
+    // failure is silent and every cut vanishes. Guarantee the object rather than trusting
+    // the data file to declare it.
+    CV.variants = CV.variants || {};
     var manifest = CV.variantManifest || [];
     var dir = CV.variantsDir || 'cv-variants/';
     var i = 0;
@@ -250,24 +542,23 @@
       });
     })();
   }
-  loadScript(dataFile, loadVariantsThenInit, function(){
+  function failed(){
     document.getElementById('cv-main').innerHTML =
       '<p style="font-family:monospace;padding:40px 0;color:#a33">Could not load <b>'+dataFile+'</b>. Make sure it sits next to cv.html.</p>';
+  }
+  loadScript(dataFile, loadVariantsThenInit, function(){
+    if(explicit) return failed();          // they asked for that file by name
+    dataFile = 'cv-data.js';               // no personal copy here — show the example
+    loadScript(dataFile, loadVariantsThenInit, failed);
   });
 })();
 
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-/* ============ dev-only variant switcher ============
-   This is a static file with no build step, so "am I local?" is detected from the
-   host: localhost / 127.0.0.1 / file:// / *.local. `?dev=1` forces it on anywhere
-   (handy for previewing cuts on a deployed URL). It never appears on a public
-   domain, and is hidden from the printed/PDF output regardless. */
-function isDevMode(){
-  if(new URLSearchParams(location.search).has('dev')) return true;
-  var h = location.hostname;
-  return h === '' || h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || /\.local$/.test(h);
-}
+/* ============ cuts panel ============
+   The left rail listing every cut. This is the UI: someone who downloaded a ZIP and
+   double-clicked cv.html should be able to see all their versions without touching a
+   URL. Rendered whenever at least one variant exists, and hidden from print. */
 
 function variantLabel(key, v){
   if(v && v.label) return v.label;                 // optional `label:` on a variant wins
@@ -276,11 +567,13 @@ function variantLabel(key, v){
 }
 function variantGroup(v){ return (v && v.group) ? v.group : 'Other'; }  // optional `group:` family
 
-function renderDevSwitch(){
-  if(!isDevMode()) return;
-  if(document.querySelector('.devswitch')) return;
+function renderCuts(){
+  if(document.querySelector('.cuts')) return;
   var variants = (window.CV && window.CV.variants) || {};
-  var current  = new URLSearchParams(location.search).get('role') || '';
+  var keys = Object.keys(variants).filter(function(k){ return k !== '_template'; });
+  if(!keys.length) return;                      // nothing to switch between yet
+
+  var current = new URLSearchParams(location.search).get('role') || '';
   function href(role){
     var p = new URLSearchParams(location.search);
     if(role) p.set('role', role); else p.delete('role');
@@ -288,80 +581,312 @@ function renderDevSwitch(){
     return location.pathname + (qs ? '?' + qs : '');
   }
 
-  // Bucket variants by family, preserving first-seen group order; "Other" sinks last.
-  var order = [], byGroup = {}, count = 0;
-  Object.keys(variants).forEach(function(k){
-    if(k === '_template') return;
-    count++;
+  // Bucket by family, preserving first-seen group order; "Other" sinks last.
+  var order = [], byGroup = {};
+  keys.forEach(function(k){
     var g = variantGroup(variants[k]);
     if(!byGroup[g]){ byGroup[g] = []; order.push(g); }
     byGroup[g].push({ key:k, name:variantLabel(k, variants[k]) });
   });
   order.sort(function(a,b){ return (a==='Other'?1:0) - (b==='Other'?1:0); });
 
-  var curName = (current && variants[current]) ? variantLabel(current, variants[current]) : 'Full CV';
-
-  function row(key, name, group){
-    var active = (key === current) ? ' active' : '';
-    var hay = (name + ' ' + (group||'')).toLowerCase();
-    return '<a class="'+active.trim()+'" data-hay="'+esc(hay)+'" href="'+esc(href(key))+'">'+esc(name)+'</a>';
+  function row(key, name){
+    return '<a data-role="'+esc(key)+'" class="'+(key === current ? 'active' : '')+
+           '" href="'+esc(href(key))+'">'+esc(name)+'</a>';
   }
-  var rows = row('', 'Full CV', '');                 // pinned: clears ?role
+  var rows = row('', 'Full résumé');             // pinned first: clears ?role
   order.forEach(function(g){
-    rows += '<div class="devswitch__group">'+esc(g)+'</div>';
-    byGroup[g].forEach(function(it){ rows += row(it.key, it.name, g); });
+    if(order.length > 1 || g !== 'Other') rows += '<div class="cuts__group">'+esc(g)+'</div>';
+    byGroup[g].forEach(function(it){ rows += row(it.key, it.name); });
   });
 
-  var wrap = document.createElement('div');
-  wrap.className = 'devswitch';
-  wrap.innerHTML =
-    '<button class="devswitch__toggle" type="button" aria-haspopup="true">'+
-      '<span class="lbl">Variant</span>'+
-      '<span class="cur">'+esc(curName)+'</span>'+
-      '<span class="caret">▾</span>'+
-    '</button>'+
-    '<div class="devswitch__panel" role="menu">'+
-      '<input class="devswitch__search" type="text" placeholder="Filter '+count+' variants…" autocomplete="off" />'+
-      '<div class="devswitch__list">'+rows+'</div>'+
-      '<div class="devswitch__empty">No match</div>'+
+  var repo = (window.CV && window.CV.repoUrl) || '';
+  var panel = document.createElement('nav');
+  panel.className = 'cuts';
+  panel.setAttribute('aria-label', 'Résumé cuts');
+  panel.innerHTML =
+    '<button class="cuts__close" type="button" aria-label="Close">✕</button>'+
+    '<div class="cuts__head"><span>Cuts</span>'+
+      '<button class="cuts__min" type="button" title="Hide the panel" aria-label="Hide the panel">‹</button>'+
+    '</div>'+ rows +
+    '<div class="cuts__actions">'+
+      '<button class="cuts__act" type="button" data-act="new">+ New cut</button>'+
+      '<button class="cuts__act" type="button" data-act="del">− Remove this cut</button>'+
+    '</div>'+
+    '<div class="cuts__foot">'+
+      '<div class="cuts__hint">Each cut is one file in <code>cv-variants/</code>, '+
+      'listed in <code>variantManifest</code>. Nothing is duplicated — a cut only '+
+      'filters and rewrites <code>cv-data.js</code>.</div>'+
+      (repo ? '<a class="cuts__link" href="'+esc(repo)+'" target="_blank" rel="noopener">How this works</a>' : '')+
+      '<div class="cuts__mode" id="cuts-mode" title="">Read-only — run npx recut</div>'+
     '</div>';
-  document.body.appendChild(wrap);
 
-  var toggle = wrap.querySelector('.devswitch__toggle');
-  var search = wrap.querySelector('.devswitch__search');
-  var list   = wrap.querySelector('.devswitch__list');
-  var empty  = wrap.querySelector('.devswitch__empty');
+  var launcher = document.createElement('button');
+  launcher.className = 'cuts__open';
+  launcher.type = 'button';
+  launcher.textContent = 'Cuts';
 
-  function filter(q){
-    q = q.trim().toLowerCase();
-    var any = false;
-    list.querySelectorAll('a').forEach(function(a){
-      var hit = !q || a.getAttribute('data-hay').indexOf(q) >= 0;
-      a.style.display = hit ? '' : 'none';
-      if(hit) any = true;
-    });
-    list.querySelectorAll('.devswitch__group').forEach(function(h){
-      var n = h.nextElementSibling, vis = false;
-      while(n && !n.classList.contains('devswitch__group')){
-        if(n.tagName === 'A' && n.style.display !== 'none'){ vis = true; break; }
-        n = n.nextElementSibling;
-      }
-      h.style.display = vis ? '' : 'none';
-    });
-    empty.style.display = any ? 'none' : 'block';
-  }
+  document.body.appendChild(panel);
+  document.body.appendChild(launcher);
+  document.body.classList.add('has-cuts');   // lets the back link move out of the corner
 
-  function open(){ wrap.classList.add('open'); search.value = ''; filter(''); setTimeout(function(){ search.focus(); }, 0); }
-  function close(){ wrap.classList.remove('open'); }
-  toggle.addEventListener('click', function(){ wrap.classList.contains('open') ? close() : open(); });
-  search.addEventListener('input', function(){ filter(search.value); });
-  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) close(); });
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape') close();
-    if(e.key === 'Enter' && wrap.classList.contains('open')){
-      var first = list.querySelector('a:not([style*="display: none"])');
-      if(first) location.href = first.getAttribute('href');
+  /* Collapsed-by-choice is remembered; collapsed-by-width is not, because it isn't a
+     choice. Both end up showing the same launcher. */
+  try { if(localStorage.getItem('recut-cuts') === 'collapsed') document.body.classList.add('cuts-collapsed'); } catch(e){}
+
+  launcher.addEventListener('click', function(){
+    document.body.classList.remove('cuts-collapsed');
+    document.body.classList.add('cuts-open');
+    try { localStorage.removeItem('recut-cuts'); } catch(e){}
+  });
+  panel.querySelector('.cuts__min').addEventListener('click', function(){
+    document.body.classList.add('cuts-collapsed');
+    document.body.classList.remove('cuts-open');
+    try { localStorage.setItem('recut-cuts', 'collapsed'); } catch(e){}
+  });
+  panel.querySelector('.cuts__close').addEventListener('click', function(){
+    document.body.classList.remove('cuts-open');
+  });
+
+  panel.addEventListener('click', function(e){
+    var act = e.target.closest ? e.target.closest('.cuts__act') : null;
+    if(!act || !panel.contains(act)) return;
+    var role = new URLSearchParams(location.search).get('role') || '';
+    if(act.getAttribute('data-act') === 'new') newCutDialog();
+    else removeCutDialog(role, variantLabel(role, variants[role]));
+  });
+
+  /* Switching cuts never reloads: fade the document out, swap the URL with pushState,
+     re-render, fade back in. The rail and the artwork stay put, so the eye reads one
+     surface changing rather than the whole window blinking. Reduced motion swaps
+     instantly instead. */
+  var calm = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  panel.addEventListener('click', function(e){
+    var a = e.target.closest ? e.target.closest('a[data-role]') : null;
+    if(!a || !panel.contains(a)) return;
+    e.preventDefault();
+    document.body.classList.remove('cuts-open');
+    if(a.classList.contains('active')) return;                      // already here
+
+    function swap(){
+      history.pushState({}, '', a.getAttribute('href'));
+      applyRole();
+      window.scrollTo(0, 0);
+      document.body.classList.remove('leaving');
     }
+    if(calm){ swap(); return; }
+    panel.querySelectorAll('a[data-role]').forEach(function(x){ x.classList.remove('active'); });
+    a.classList.add('active');
+    document.body.classList.add('leaving');
+    setTimeout(swap, 185);
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') document.body.classList.remove('cuts-open');
+  });
+}
+
+/* ============ new / remove cut ============
+   A page opened from disk cannot write or delete files, and pretending otherwise would
+   be worse than not offering the button. So these do the parts a browser genuinely can:
+   build the starter file and hand it to you, and write the instruction — or the AI
+   prompt — you would otherwise have to compose yourself. */
+
+/* `npx recut` serves this page from a tiny local server that can write files. When it's
+   there the cut buttons do the real thing; opened straight from disk they fall back to
+   downloads and prompts. Same page either way — the difference is one fetch. */
+window.__RECUT_SERVER__ = false;
+function recutMode(on, detail){
+  var el = document.getElementById('cuts-mode');
+  if(!el) return;
+  el.classList.toggle('on', !!on);
+  el.textContent = on ? 'Writes enabled' : 'Read-only — run npx recut';
+  el.title = on ? ('recut server is serving ' + (detail || 'this folder'))
+                : 'Opened straight from disk, so the cut buttons hand you a starter file '+
+                  'and an AI prompt instead of writing to the folder. Run `npx recut` for writes.';
+}
+function recutPing(){
+  if(location.protocol === 'file:') return recutMode(false);   // no server to find
+  fetch('/api/ping').then(function(r){ return r.ok ? r.json() : null; }).then(function(d){
+    if(d && d.ok){ window.__RECUT_SERVER__ = true; recutMode(true, d.dir); }
+    else recutMode(false);
+  }).catch(function(){ recutMode(false); });
+}
+function recutCtx(){
+  return {
+    dataFile: window.__CV_DATAFILE__ || 'cv-data.js',
+    variantsDir: (window.CV && window.CV.variantsDir) || 'cv-variants/'
+  };
+}
+
+function rcSlug(s){
+  return String(s || '').toLowerCase().trim()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
+}
+function rcTitle(s){
+  return String(s || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+}
+function rcCopy(text, btn){
+  var done = function(){ var t = btn.textContent; btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = t; }, 1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(done, function(){}); return; }
+  var ta = document.createElement('textarea');       // file:// sometimes has no clipboard API
+  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); done(); } catch(e){}
+  ta.remove();
+}
+function rcDownload(filename, text){
+  var url = URL.createObjectURL(new Blob([text], { type: 'text/javascript' }));
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+}
+function rcModal(html){
+  var wrap = document.createElement('div');
+  wrap.className = 'rc';
+  wrap.innerHTML = '<div class="rc__card">'+html+'</div>';
+  function close(){ wrap.remove(); document.removeEventListener('keydown', onKey); }
+  function onKey(e){ if(e.key === 'Escape') close(); }
+  wrap.addEventListener('click', function(e){ if(e.target === wrap) close(); });
+  document.addEventListener('keydown', onKey);
+  document.body.appendChild(wrap);
+  return { el: wrap, close: close };
+}
+
+function starterVariant(key, label){
+  return '/* Cut: ' + key + '\n' +
+    '   What is this cut arguing? One line, so future-you remembers.\n' +
+    '   Preview: cv.html?role=' + key + ' */\n' +
+    'window.CV.variants["' + key + '"] = {\n' +
+    '  group: "Roles",\n' +
+    '  label: "' + label + '",\n' +
+    '  tagline: "",                 // leave empty to keep the one in cv-data.js\n' +
+    '  cover: "banner",             // slim header strip instead of a full cover page\n' +
+    '\n' +
+    '  tracks: [],                  // which kinds of entry qualify. Empty = all of them.\n' +
+    '  exclude: [],                 // entry ids to drop regardless of tracks\n' +
+    '  hide: [],                    // whole section titles to drop\n' +
+    '  order: [],                   // section titles in order (ORIGINAL titles — rename runs after)\n' +
+    '  rename: {},\n' +
+    '\n' +
+    '  overrides: {\n' +
+    '    // "entry-id": { bullets: ["Rewritten for this application only."] },\n' +
+    '  },\n' +
+    '};\n';
+}
+
+function newCutDialog(){
+  var m = rcModal(
+    '<p class="rc__title">New cut</p>'+
+    '<label for="rc-name">Name it — the company, or the kind of role</label>'+
+    '<input id="rc-name" type="text" placeholder="Acme Studio" autocomplete="off" />'+
+    '<label for="rc-jd">Paste the job posting (optional — used in the AI prompt)</label>'+
+    '<textarea id="rc-jd" placeholder="Paste the description here…"></textarea>'+
+    '<p class="rc__note" id="rc-note"></p>'+
+    '<div class="rc__row">'+
+      (window.__RECUT_SERVER__ ? '<button class="rc__btn" type="button" id="rc-make">Create cut</button>' : '')+
+      '<button class="rc__btn'+(window.__RECUT_SERVER__ ? ' rc__btn--ghost' : '')+'" type="button" id="rc-ai">Copy AI prompt</button>'+
+      (window.__RECUT_SERVER__ ? '' : '<button class="rc__btn rc__btn--ghost" type="button" id="rc-dl">Download starter file</button>')+
+    '</div>');
+
+  var name = m.el.querySelector('#rc-name');
+  var jd   = m.el.querySelector('#rc-jd');
+  var note = m.el.querySelector('#rc-note');
+
+  var ctx = recutCtx();
+  function key(){ return rcSlug(name.value) || 'new-cut'; }
+  function sync(){
+    note.innerHTML = window.__RECUT_SERVER__
+      ? 'Writes <code>' + esc(ctx.variantsDir + key()) + '.js</code> and adds it to '+
+        '<code>variantManifest</code> in <code>' + esc(ctx.dataFile) + '</code>.'
+      : 'Creates <code>' + esc(ctx.variantsDir + key()) + '.js</code>, then add '+
+        '<code>"' + esc(key()) + '"</code> to <code>variantManifest</code> in <code>' + esc(ctx.dataFile) + '</code>.';
+  }
+  name.addEventListener('input', sync); sync();
+  setTimeout(function(){ name.focus(); }, 0);
+
+  var dl = m.el.querySelector('#rc-dl');
+  if(dl) dl.addEventListener('click', function(){
+    rcDownload(key() + '.js', starterVariant(key(), rcTitle(name.value) || rcTitle(key())));
+  });
+
+  var make = m.el.querySelector('#rc-make');
+  if(make) make.addEventListener('click', function(){
+    make.disabled = true; make.textContent = 'Creating…';
+    fetch('/api/cut', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        key: key(), label: rcTitle(name.value) || rcTitle(key()),
+        dataFile: ctx.dataFile, variantsDir: ctx.variantsDir
+      })
+    }).then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+      .then(function(res){
+        if(!res.ok){ note.innerHTML = '<b>' + esc(res.d.error || 'Could not create the cut.') + '</b>';
+                     make.disabled = false; make.textContent = 'Create cut'; return; }
+        // the new variant file has to be fetched, so this one time we do reload
+        var p = new URLSearchParams(location.search); p.set('role', key());
+        location.href = location.pathname + '?' + p.toString();
+      }).catch(function(){
+        note.innerHTML = '<b>Could not reach the recut server.</b>';
+        make.disabled = false; make.textContent = 'Create cut';
+      });
+  });
+  m.el.querySelector('#rc-ai').addEventListener('click', function(e){
+    var p = 'Read AGENTS.md in this folder, then create cv-variants/' + key() + '.js '+
+      'and add "' + key() + '" to variantManifest in cv-data.js.\n\n'+
+      'Build the cut from what is already in cv-data.js — do not invent anything, do not '+
+      'change any dates, and do not add metrics I have not given you. Keep it to two pages.'+
+      (jd.value.trim() ? '\n\nThe job posting:\n\n' + jd.value.trim() : '');
+    rcCopy(p, e.currentTarget);
+  });
+}
+
+function removeCutDialog(key, label){
+  if(!key) return;
+  var ctx = recutCtx();
+  var server = window.__RECUT_SERVER__;
+
+  var m = rcModal(
+    '<p class="rc__title">Remove cut</p>'+
+    (server
+      ? '<p class="rc__note" style="margin-top:0">Deletes <code>' + esc(ctx.variantsDir + key) + '.js</code> '+
+        'and removes <code>"' + esc(key) + '"</code> from <code>variantManifest</code>.</p>'
+      : '<p class="rc__note" style="margin-top:0">This page can\'t delete files on your computer. '+
+        'To remove <b>' + esc(label || key) + '</b>:</p>'+
+        '<p class="rc__note">1. Delete <code>' + esc(ctx.variantsDir + key) + '.js</code><br>'+
+        '2. Remove <code>"' + esc(key) + '"</code> from <code>variantManifest</code> in <code>' + esc(ctx.dataFile) + '</code></p>')+
+    '<p class="rc__note">Nothing else is affected — your history lives in <code>' + esc(ctx.dataFile) + '</code>, '+
+    'and a cut never held content of its own.</p>'+
+    '<p class="rc__note" id="rc-err"></p>'+
+    '<div class="rc__row">'+
+      (server ? '<button class="rc__btn" type="button" id="rc-del">Delete cut</button>' : '')+
+      '<button class="rc__btn'+(server ? ' rc__btn--ghost' : '')+'" type="button" id="rc-ai">Copy AI prompt</button>'+
+      '<button class="rc__btn rc__btn--ghost" type="button" id="rc-ok">Cancel</button>'+
+    '</div>');
+
+  m.el.querySelector('#rc-ok').addEventListener('click', m.close);
+  m.el.querySelector('#rc-ai').addEventListener('click', function(e){
+    rcCopy('Delete ' + ctx.variantsDir + key + '.js and remove "' + key + '" from variantManifest in ' +
+           ctx.dataFile + '. Leave ' + ctx.dataFile + ' otherwise untouched.', e.currentTarget);
+  });
+
+  var del = m.el.querySelector('#rc-del');
+  if(del) del.addEventListener('click', function(){
+    del.disabled = true; del.textContent = 'Deleting…';
+    var q = new URLSearchParams({ key: key, dataFile: ctx.dataFile, variantsDir: ctx.variantsDir });
+    fetch('/api/cut?' + q.toString(), { method: 'DELETE' })
+      .then(function(r){ return r.json().then(function(d){ return { ok: r.ok, d: d }; }); })
+      .then(function(res){
+        if(!res.ok){ m.el.querySelector('#rc-err').innerHTML = '<b>' + esc(res.d.error || 'Could not delete.') + '</b>';
+                     del.disabled = false; del.textContent = 'Delete cut'; return; }
+        var p = new URLSearchParams(location.search); p.delete('role');
+        var qs = p.toString();
+        location.href = location.pathname + (qs ? '?' + qs : '');
+      }).catch(function(){
+        m.el.querySelector('#rc-err').innerHTML = '<b>Could not reach the recut server.</b>';
+        del.disabled = false; del.textContent = 'Delete cut';
+      });
   });
 }
 
@@ -432,39 +957,117 @@ function applyVariant(CV){
   return out;
 }
 
+/* One-time wiring. Everything that depends on which cut you're looking at lives in
+   applyRole(), so switching cuts never reloads the page. */
 function init(){
-  var CV = window.CV;
-  if(!CV){ return; }
-  CV = applyVariant(CV);
-  if(CV.theme) document.body.classList.add('theme-' + CV.theme);
-  if(CV.cover) document.body.classList.add('cover-' + CV.cover);
+  if(!window.CV){ return; }
+  var printBtn = document.getElementById('print'); if(printBtn) printBtn.addEventListener('click', exportPDF);
+
+  /* "Back to website" only exists if you're hosting this inside a site of your own.
+     Set backHref in cv-data.js to switch it on; by default there's nothing to go back to. */
+  var back = document.getElementById('backlink');
+  if(window.CV.backHref){ back.setAttribute('href', window.CV.backHref); } else { back.remove(); }
+
+  renderCuts();      // build the panel first: the ping writes its status line
+  recutPing();
+  applyRole();
+  window.addEventListener('popstate', function(){ applyRole(); });   // browser back/forward
+}
+
+var __lastArtKey = null;
+
+/* Render (or re-render) the document for whichever cut the URL currently names.
+   Called on load, on every cut click, and on browser back/forward. */
+function applyRole(){
+  var CV = applyVariant(window.CV);
+  var body = document.body;
+
+  // Body classes are per-cut, so clear the previous cut's before adding this one's.
+  body.className = body.className.split(/\s+/).filter(function(c){
+    return c && !/^(theme|cover)-/.test(c) && c !== 'no-hero' && c !== 'has-video';
+  }).join(' ');
+  if(CV.theme) body.classList.add('theme-' + CV.theme);
+  if(CV.cover) body.classList.add('cover-' + CV.cover);
+
+  var hero = document.querySelector('.hero');
+  var oldVideo = hero.querySelector('.herovideo'); if(oldVideo) oldVideo.remove();
+  var regen = document.getElementById('regen');
+  if(regen) regen.style.display = '';
   if(CV.heroVideo){
-    document.body.classList.add('has-video');
+    body.classList.add('has-video');
     var v = document.createElement('video');
     v.className = 'herovideo';
     v.src = CV.heroVideo; v.autoplay = true; v.muted = true; v.loop = true;
     v.playsInline = true; v.setAttribute('playsinline','');
-    var hero = document.querySelector('.hero');
     hero.insertBefore(v, document.getElementById('hero-inner'));
-    var rg = document.getElementById('regen'); if(rg) rg.style.display = 'none';
+    if(regen) regen.style.display = 'none';
   }
-  window.__CV_NAME__ = Array.isArray(CV.name)? CV.name.join(' ') : CV.name;
+
+  window.__CV_NAME__ = Array.isArray(CV.name) ? CV.name.join(' ') : CV.name;
   window.__CV_HIDEHERO__ = !!CV.hideHero;
   document.title = window.__CV_NAME__ + ' — CV';
-  document.getElementById('backlink').setAttribute('href', CV.backHref || '/');
+
   if(CV.hideHero){
-    document.body.classList.add('no-hero');
-    var heroEl = document.querySelector('.hero'); if(heroEl) heroEl.style.display = 'none';
-    var rgBtn = document.getElementById('regen'); if(rgBtn) rgBtn.style.display = 'none';
+    body.classList.add('no-hero');
+    hero.style.display = 'none';
+    if(regen) regen.style.display = 'none';
   } else {
+    hero.style.display = '';
     renderHero(CV);
   }
   renderMain(CV);
   renderFooter(CV);
-  if(!CV.hideHero) startArt(CV);
-  var printBtn = document.getElementById('print'); if(printBtn) printBtn.addEventListener('click', exportPDF);
-  renderDevSwitch();
+
+  /* <main> persists across cuts, so its entrance animation won't replay on its own.
+     Yanking and restoring `animation` forces the reflow that restarts it. */
+  var m = document.getElementById('cv-main');
+  m.style.animation = 'none'; void m.offsetHeight; m.style.animation = '';
+
+  /* The generative artwork is expensive and looks identical across cuts that share a
+     theme — only redraw when something it actually depends on changed. */
+  var artKey = (CV.theme || '') + '|' + (CV.hideHero ? 'none' : 'art') + '|' + (CV.heroVideo || '');
+  if(!CV.hideHero && artKey !== __lastArtKey){ startArt(CV); }
+  __lastArtKey = CV.hideHero ? null : artKey;
+
+  syncCutsActive();
+  renderFirstRun(CV);
   observeReveals();
+}
+
+/* Keep the rail's highlight in step with what's actually rendered — which is the URL's
+   role, or `defaultRole` when the URL names none. Without the fallback, opening the page
+   with a defaultRole set highlights "Full résumé" while showing something else. */
+function syncCutsActive(){
+  var url = new URLSearchParams(location.search).get('role');
+  var current = url || (window.CV && window.CV.defaultRole) || '';
+  if(current === 'full' || current === 'none') current = '';
+  document.querySelectorAll('.cuts a[data-role]').forEach(function(a){
+    a.classList.toggle('active', a.getAttribute('data-role') === current);
+  });
+  var del = document.querySelector('.cuts__act[data-act="del"]');
+  if(del) del.style.display = current ? '' : 'none';
+}
+
+/* A strip along the bottom, shown only while the shipped example data is still in
+   place. It disappears the moment someone puts their own name in cv-data.js — so it
+   can never nag a real user, and nobody has to remember to delete it. */
+function renderFirstRun(CV){
+  if(document.querySelector('.firstrun')) return;      // applyRole() runs on every cut
+  var name = Array.isArray(CV.name) ? CV.name.join(' ') : String(CV.name || '');
+  if(name.trim() !== 'Jordan Rivera') return;
+  try { if(sessionStorage.getItem('recut-firstrun') === 'dismissed') return; } catch(e){}
+
+  var bar = document.createElement('div');
+  bar.className = 'firstrun';
+  bar.innerHTML =
+    '<span>This is the example résumé. Open <code>cv-data.js</code> in any text editor '+
+    'and put your own history in — or hand it to an AI along with <code>AGENTS.md</code>.</span>'+
+    '<button type="button">Got it</button>';
+  bar.querySelector('button').addEventListener('click', function(){
+    try { sessionStorage.setItem('recut-firstrun', 'dismissed'); } catch(e){}
+    bar.remove();
+  });
+  document.body.appendChild(bar);
 }
 
 function renderHero(CV){
@@ -618,10 +1221,45 @@ function startArt(CV){
 /* ============ PDF export via Paged.js ============
    Paginates a clone of the live CV (cover + body + footer) into real pages — page numbers, a
    running header, and a full-bleed cover — instead of leaning on the browser's print engine.
-   Shape: new Previewer().preview(content, ['./cv-print.css'], target).
-   The stylesheet path is RELATIVE on purpose — an absolute '/cv-print.css' resolves to
-   the filesystem root when this page is opened from disk, and the PDF loses all styling.
+   Shape: new Previewer().preview(content, printStylesheets(), target).
    Falls back to a plain window.print() if the Paged.js polyfill didn't load. */
+
+/* Paged.js takes its stylesheets either as URLs it will fetch, or as an object mapping a
+   name to CSS *text*. We use the text form deliberately: a URL means fetch(), and fetch()
+   is blocked for local files on a file:// page — and for blob: URLs there too, since the
+   page's origin is null. Either would hang the export with no error. Passing the text
+   means nothing is fetched, so Save PDF works identically whether this page was
+   double-clicked or served by `npx recut`. The CSS lives in
+   <script type="text/css" id="print-css"> in the head. */
+function printStylesheets(){
+  var el = document.getElementById('print-css');
+  var css = el ? el.textContent : '';
+  var sheets = {}; sheets['cv-print.css'] = css;
+  return [sheets];
+}
+/* The cover art goes into the PDF as a data: URI, and a full-resolution PNG of a
+   viewport-sized canvas is several megabytes of base64 — which Chrome's print preview then
+   has to decode and rasterize, and that is most of the wait between "paginated" and "the
+   dialog appeared". The artwork is a soft gradient, so a downscaled JPEG is visually
+   identical at print size and roughly an order of magnitude smaller. PNG stays as the
+   fallback for browsers that won't encode JPEG. */
+function artSnapshot(src){
+  var MAX = 1600;
+  var scale = Math.min(1, MAX / Math.max(src.width || 1, src.height || 1));
+  var out = src;
+  if(scale < 1){
+    out = document.createElement('canvas');
+    out.width = Math.round(src.width * scale);
+    out.height = Math.round(src.height * scale);
+    var ctx = out.getContext('2d');
+    ctx.fillStyle = '#000';                       // JPEG has no alpha; the hero sits on black
+    ctx.fillRect(0, 0, out.width, out.height);
+    ctx.drawImage(src, 0, 0, out.width, out.height);
+  }
+  var jpg = out.toDataURL('image/jpeg', 0.82);
+  return (jpg && jpg.indexOf('data:image/jpeg') === 0) ? jpg : out.toDataURL('image/png');
+}
+
 function buildPrintContent(){
   var name = window.__CV_NAME__ || document.title.replace(/ — CV$/, '');
   var heroHTML = '';
@@ -633,7 +1271,7 @@ function buildPrintContent(){
     if(cloneCanvas && srcCanvas){
       var img = document.createElement('img');
       img.className = 'art-img';
-      try { img.src = srcCanvas.toDataURL('image/png'); } catch(e){ /* tainted canvas — skip art */ }
+      try { img.src = artSnapshot(srcCanvas); } catch(e){ /* tainted canvas — skip art */ }
       cloneCanvas.parentNode.replaceChild(img, cloneCanvas);
     }
     var vid = hero.querySelector('.herovideo'); if(vid && vid.parentNode) vid.parentNode.removeChild(vid);
@@ -695,25 +1333,64 @@ function exportPDF(){
   var label = btn ? btn.textContent : '';
   if(btn){ btn.disabled = true; btn.textContent = '⟳ Preparing'; }
 
-  // snapshot the live (visible) CV first, THEN swap to the paginated view
-  var content = buildPrintContent();
-  var target = document.getElementById('paged-target');
-  target.innerHTML = '';
-  document.body.classList.add('paged-ready', 'paging');   // show (measurable) target, hide live view
+  var status = document.getElementById('paged-status');
+  function say(msg){ console.log('[cv] ' + msg); if(status) status.textContent = msg; }
 
-  new window.Paged.Previewer().preview(content, ['./cv-print.css'], target)
-    .then(function(){
-      document.body.classList.remove('paging');
-      if(btn){ btn.disabled = false; btn.textContent = label; }
-      // let the paged layout settle one frame, then open the print / save-as-PDF dialog
-      requestAnimationFrame(function(){ setTimeout(function(){ printWithFilename(); }, 80); });
-    })
-    .catch(function(err){
-      console.error('[cv] Paged.js export failed — falling back to native print:', err);
-      document.body.classList.remove('paged-ready', 'paging');
-      if(btn){ btn.disabled = false; btn.textContent = label; }
+  // snapshot the live (visible) CV first, THEN swap to the paginated view
+  var content, target;
+  try {
+    say('building print content…');
+    content = buildPrintContent();
+    target = document.getElementById('paged-target');
+    target.innerHTML = '';
+  } catch(err){
+    console.error('[cv] buildPrintContent threw:', err);
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+    printWithFilename();
+    return;
+  }
+  document.body.classList.add('paged-ready', 'paging');   // show (measurable) target, hide live view
+  say('paginating…');
+
+  /* Pagination is genuinely slow on a long CV — several seconds is normal, and a silent
+     button that long reads as a crash. Count pages as Paged.js lays them out so there's
+     something moving. */
+  var seen = 0;
+  var watcher = new MutationObserver(function(){
+    var n = target.querySelectorAll('.pagedjs_page').length;
+    if(n !== seen){ seen = n; say('laying out page ' + n + '…'); }
+  });
+  watcher.observe(target, { childList: true, subtree: true });
+
+  /* Paged.js can also hang rather than reject — a stylesheet that never resolves leaves
+     its promise pending forever. Race it, so the worst case is the browser's own print
+     dialog rather than a dead button. Generous, because slow is not the same as stuck. */
+  var settled = false;
+  function finish(ok, err){
+    if(settled) return; settled = true;
+    watcher.disconnect();
+    if(err) console.error('[cv] Paged.js export failed — falling back to native print:', err);
+    if(btn){ btn.disabled = false; btn.textContent = label; }
+    if(ok){
+      /* Chrome now renders its own print preview, which takes a moment on a page with a
+         full-bleed cover. Keep the overlay up saying so — but drop it in the frame before
+         window.print(), or the status text would print onto the first page. */
+      say('opening the print dialog…');
+      requestAnimationFrame(function(){ setTimeout(function(){
+        document.body.classList.remove('paging');
+        printWithFilename();
+      }, 80); });
+    } else {
+      document.body.classList.remove('paging', 'paged-ready');
+      if(status) status.textContent = 'Preparing PDF…';
       printWithFilename();
-    });
+    }
+  }
+  var giveUp = setTimeout(function(){ finish(false, new Error('timed out after 45s')); }, 45000);
+
+  new window.Paged.Previewer().preview(content, printStylesheets(), target)
+    .then(function(){ clearTimeout(giveUp); finish(true); })
+    .catch(function(err){ clearTimeout(giveUp); finish(false, err); });
 }
 
 /* restore the live, scrolling CV once the print dialog closes (fires on print OR cancel) */

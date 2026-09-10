@@ -17,10 +17,15 @@
 
 const CV = {
   theme: "warm",                    // "default" (blue/red), "warm", or "chanel"
+  cover: "banner",                  // "banner" = slim header strip at the top of page one.
+                                    // Remove this line for a full-page cover instead.
   name: ["Jordan", "Rivera"],       // rendered on two lines
   tagline: "Design Engineer × Interaction × Research",
-  backHref: "/",                    // where "← Back to website" points
   profile: "",                      // optional one-line intro, shown under the tagline
+  repoUrl: "https://github.com/YOURNAME/recut",   // "How this works" link at the foot of
+                                    // the Cuts panel. Delete this line to hide it.
+  // backHref: "/",                 // only if you host this inside your own site:
+                                    // adds a "← Back to website" link in the corner
 
   colophon: [
     { k: "Email",     v: "jordan@example.com", href: "mailto:jordan@example.com" },
@@ -118,6 +123,10 @@ const CV = {
       ],
     },
   ],
+
+  /* Leave this EMPTY. Each file in cv-variants/ registers itself into it on load
+     (`window.CV.variants.engineering = {...}`), so the key has to exist first. */
+  variants: {},
 
   /* Every variant file-stem, loaded by cv.html after this file.
      Add a cut = one new file in cv-variants/ + one string here. */

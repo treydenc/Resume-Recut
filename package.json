@@ -1,11 +1,27 @@
 {
   "name": "recut",
   "version": "0.1.0",
-  "description": "One resume, many true versions of you. A data file, per-application variants, and a Paged.js PDF pipeline — no build step.",
+  "description": "One resume, many true versions of you. A data file, per-application cuts, and a Paged.js PDF pipeline — no build step.",
   "type": "module",
   "license": "MIT",
-  "keywords": ["resume", "cv", "ats", "pagedjs", "job-search", "pdf"],
+  "keywords": ["resume", "cv", "ats", "pagedjs", "job-search", "pdf", "agents"],
+  "bin": {
+    "recut": "bin/recut.mjs"
+  },
+  "files": [
+    "bin/",
+    "tools/",
+    "cv.html",
+    "cv-data.js",
+    "cv-variants/",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
+    "start": "node bin/recut.mjs",
     "ats-check": "node tools/ats-check.mjs"
   },
   "devDependencies": {

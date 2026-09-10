@@ -29,8 +29,7 @@ Three files and a folder:
 |---|---|
 | `cv-data.js` | Everything you have ever done. One entry per job, project, degree, award. |
 | `cv-variants/*.js` | One file per application. Which entries appear, what they say, what order. |
-| `cv.html` | The renderer. Open it in a browser. That's the whole toolchain. |
-| `cv-print.css` | The print stylesheet. Paged.js uses it to make a real PDF. |
+| `cv.html` | The renderer, the styles, and the PDF export. Double-click it. That's the toolchain. |
 
 A variant never copies your content — it *filters and overrides* it. A cut is usually
 twenty lines:
@@ -60,22 +59,123 @@ A broken variant only breaks that cut; the full resume still renders.
 
 ## Quickstart
 
-1. Clone this repo.
-2. Open `cv.html` in a browser. You'll see the example resume.
-3. Replace `cv-data.js` with your own history.
-4. Copy `cv-variants/engineering.js` to start a cut of your own.
-5. Hit **Save PDF**. Paged.js paginates it properly — running headers, folios,
-   no orphaned section headings — and names the file
-   `Resume_Your_Name_role_2026-01-30.pdf`.
+**No terminal required.** If you've never run a command in your life, you can still use
+this.
 
-No install. No build. No account.
+**1. Download it.** Click the green **Code** button at the top of this page →
+**Download ZIP** → unzip it anywhere.
+
+**2. Double-click `cv.html`.** It opens in your browser. That's the whole install.
+
+You're looking at the example resume for "Jordan Rivera." Now change the address bar
+ending to see the same person argued three ways:
+
+```
+cv.html?role=engineering
+cv.html?role=product
+cv.html?role=research
+```
+
+Look at the "Atlas" project in the first two. Same entry, same facts, different case.
+
+**3. Put your own history in.** Open `cv-data.js` in any text editor and replace the
+example entries with yours. It's a plain list — name, jobs, projects, schools — with
+comments explaining each part.
+
+Easier: give an AI assistant your current resume and this instruction —
+
+> "Read `AGENTS.md` in this folder, then rewrite `cv-data.js` using my attached resume.
+> Don't invent anything."
+
+Save, refresh the browser, and it's your resume.
+
+**4. Make a cut for a specific job.** Duplicate one of the files in `cv-variants/`,
+rename it (say `acme.js`), and add its name to the `variantManifest` line near the
+bottom of `cv-data.js`. Then visit `cv.html?role=acme`.
+
+Or paste a job posting to your AI assistant:
+
+> "Make a new variant called `acme` for this job posting. Follow the rules in
+> `AGENTS.md`. Keep it to two pages."
+
+**5. Save the PDF.** Click **Save PDF** on the page, then choose "Save as PDF" in the
+print dialog. You get real pages — running headers, page numbers, no section heading
+stranded at the bottom of a page — and the file names itself
+`Resume_Your_Name_acme_2026-01-30.pdf`.
+
+That's it. No account, no install, no build step, no framework.
+
+### Keeping your real résumé out of the repo
+
+If you fork this, or you're using it while job hunting, you don't want your phone number
+and a folder named after every company you're applying to sitting in a public repo.
+
+So `cv.html` prefers **`cv-data.local.js`** if it exists, and falls back to the example
+`cv-data.js` if it doesn't. Both that file and **`cv-variants/local/`** are already in
+`.gitignore`.
+
+```
+cv-data.local.js       your actual résumé          (git ignores it)
+cv-variants/local/     your actual cuts            (git ignores it)
+cv-data.js             the example everyone clones (committed)
+cv-variants/*.js       the example cuts            (committed)
+```
+
+Point `variantsDir` at your local folder inside `cv-data.local.js`:
+
+```js
+variantsDir: "cv-variants/local/",
+```
+
+Nothing else changes — double-clicking `cv.html` finds your data automatically, and a
+stranger who clones the repo sees the example. `?data=other-file.js` overrides both.
+
+### Optional: one command, and the buttons write real files
+
+If you have Node, run this from the folder instead of double-clicking:
+
+```
+npx recut
+```
+
+It serves the page at `http://127.0.0.1:4321/cv.html` and opens it. Everything looks the
+same, except **+ New cut** now writes `cv-variants/<name>.js` and adds it to
+`variantManifest` for you, and **Remove this cut** actually deletes it. No install, no
+build — the server is one dependency-free file you can read in a sitting, it binds to
+loopback only, and it refuses to touch anything outside the folder you served.
+
+Without it, those buttons still work — they just hand you the starter file and the AI
+prompt instead of writing to disk.
+
+```
+npx recut --dir ../somewhere   serve a different folder
+npx recut --port 5000
+npx recut --no-open
+```
+
+### Optional: check what a robot sees
+
+If you're comfortable with a terminal, this reads your exported PDF the way an applicant
+tracking system does and tells you what's broken:
+
+```
+npm install
+npm run ats-check ~/Downloads/Resume_Your_Name_2026-01-30.pdf
+```
+
+Skip it if that means nothing to you — the resume works either way.
 
 ### Editing it with an AI
 
 The data file *is* the interface. That's deliberate — a language model edits a
 well-commented data file far more reliably than it operates someone's GUI.
 
-> "Read `ABOUT.md`, then reformat my attached resume into `cv-data.js`."
+`AGENTS.md` in the repo root is the operating manual: the data model, the variant keys,
+the PDF gotchas, and a set of honesty rules the assistant is told to hold to (never
+invent a metric, never change a date, omit rather than misdate). Claude Code, Cursor and
+Codex pick that file up automatically; anywhere else, point at it.
+
+> "Read `AGENTS.md`, then reformat my attached resume into `cv-data.js`."
 
 > "Make a new variant called `meta` for this job posting. Cut anything that reads
 > academic, lead with the interaction work, and keep it to two pages."
