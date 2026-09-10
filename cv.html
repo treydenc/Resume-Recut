@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111110; --paper:#f7f6f2; --muted:#76746c; --faint:#9b998f; --rule:#e3e1d8;
+    --accent:#ff352a;                       /* default accent */
+    --display:"Space Grotesk","Arial Narrow",sans-serif;
+    --mono:"Space Mono","Courier New",monospace;
+    --serif:"Newsreader",Georgia,serif;
+    --maxw:940px;
+  }
+  body.theme-chanel{ --paper:#faf9f6; --accent:#8c7853; }   /* Chanel: warm paper + gold */
+  body.theme-warm{ --paper:#faf9f6; --accent:#b5895a; }     /* warm paper + amber (matches the site video) */
+  /* optional full-screen video hero (set heroVideo in the data file) */
+  .herovideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.06; z-index:1;}
+  body.has-video #art{opacity:0;}     /* video shows on screen; canvas stays sized for print fallback */
+
+  *{box-sizing:border-box;}
+  html{-webkit-text-size-adjust:100%;}
+  body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--serif); line-height:1.5; -webkit-font-smoothing:antialiased;}
+
+  /* toolbar + back link */
+  .toolbar{position:fixed; top:16px; right:16px; z-index:50; display:flex; gap:8px;}
+  .toolbar button{font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:rgba(17,17,16,.82); color:#f7f6f2; border:none; padding:9px 12px; border-radius:2px; cursor:pointer; backdrop-filter:blur(6px); transition:background .15s ease;}
+  .toolbar button:hover{background:var(--ink);}
+  .toolbar button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .backlink{position:fixed; top:16px; left:16px; z-index:50; font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:rgba(17,17,16,.82); color:#f7f6f2; text-decoration:none; padding:9px 12px; border-radius:2px; backdrop-filter:blur(6px); transition:background .15s ease;}
+  .backlink:hover{background:var(--ink);}
+
+  /* dev-only variant switcher (localhost or ?dev) — never renders on the live site.
+     Launcher button + searchable popover panel; scales to ~20 grouped variants. */
+  .devswitch{position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:60; font-family:var(--mono);}
+  .devswitch__toggle{display:flex; align-items:center; gap:8px; cursor:pointer; border:none;
+    background:rgba(17,17,16,.86); padding:8px 14px; border-radius:4px; backdrop-filter:blur(6px);
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:#cfcdc4;
+    transition:color .15s ease;}
+  .devswitch__toggle:hover{color:#fff;}
+  .devswitch__toggle .lbl{color:#76746c; letter-spacing:.12em;}
+  .devswitch__toggle .cur{color:#f4f2ea;}
+  .devswitch__toggle .caret{color:#76746c; font-size:8px; transition:transform .15s ease;}
+  .devswitch.open .devswitch__toggle .caret{transform:rotate(180deg);}
+  .devswitch__panel{display:none; position:absolute; left:50%; bottom:calc(100% + 8px); transform:translateX(-50%);
+    width:300px; max-width:calc(100vw - 32px); max-height:62vh; overflow:auto;
+    background:rgba(17,17,16,.94); border-radius:6px; padding:8px; backdrop-filter:blur(8px);
+    box-shadow:0 12px 44px rgba(0,0,0,.45);}
+  .devswitch.open .devswitch__panel{display:block;}
+  .devswitch__search{width:100%; box-sizing:border-box; margin-bottom:6px; outline:none;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.1); border-radius:3px;
+    color:#f4f2ea; font-family:var(--mono); font-size:11px; letter-spacing:.02em; padding:7px 9px;}
+  .devswitch__search:focus{border-color:rgba(255,255,255,.28);}
+  .devswitch__search::placeholder{color:#6f6d65;}
+  .devswitch__group{font-family:var(--mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:#76746c; padding:9px 8px 4px;}
+  .devswitch__panel a{display:block; font-family:var(--mono); font-size:11px; letter-spacing:.03em;
+    color:#cfcdc4; text-decoration:none; padding:6px 9px; border-radius:3px;
+    transition:background .12s ease, color .12s ease;}
+  .devswitch__panel a:hover{color:#fff; background:rgba(255,255,255,.08);}
+  .devswitch__panel a.active{background:#f7f6f2; color:#111110;}
+  .devswitch__empty{display:none; color:#6f6d65; font-size:10.5px; padding:8px 9px;}
+
+  /* hero */
+  .hero{position:relative; background:#000; color:#fff; overflow:hidden;}
+  #art{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .hero::after{content:""; position:absolute; inset:0; background:radial-gradient(120% 90% at 30% 60%, rgba(0,0,0,.45) 0%, rgba(0,0,0,.62) 70%, rgba(0,0,0,.78) 100%); pointer-events:none;}
+  .hero-inner{position:relative; z-index:2; max-width:var(--maxw); margin:0 auto; padding:120px 40px 44px; min-height:min(96vh,820px); display:flex; flex-direction:column; justify-content:flex-end;}
+  .name{font-family:var(--display); font-weight:700; font-size:clamp(2.7rem,8.5vw,5.6rem); line-height:.94; letter-spacing:-.03em; margin:0; text-wrap:balance;}
+  .tagline{font-family:var(--mono); font-size:clamp(.72rem,1.5vw,.86rem); letter-spacing:.18em; text-transform:uppercase; margin:22px 0 0; color:#e9e7df; text-shadow:0 1px 3px rgba(0,0,0,.65);}
+  .colophon{margin-top:34px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px 40px; max-width:680px; font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; text-shadow:0 1px 3px rgba(0,0,0,.7);}
+  .colophon div{display:flex; gap:10px; line-height:1.5;}
+  .colophon .k{color:#c4c1b8; flex:0 0 78px; text-transform:uppercase;}
+  .colophon .v{color:#f4f2ea;}
+  .colophon a{color:#f4f2ea; text-decoration:none; border-bottom:1px solid rgba(255,255,255,.28);}
+  .colophon a:hover{border-bottom-color:#fff;}
+  .profile{font-family:var(--serif); font-size:clamp(1rem,1.7vw,1.16rem); line-height:1.45; color:#e9e6dc; max-width:620px; margin:28px 0 0;}
+
+  /* banner cover (variant cover:"banner") — slim header strip, not a full page */
+  body.cover-banner .hero-inner{min-height:0; padding:78px 40px 30px;}
+  body.cover-banner .name{font-size:clamp(2.1rem,5.5vw,3.4rem);}
+  body.cover-banner .tagline{margin-top:16px;}
+  body.cover-banner .colophon{margin-top:20px;}
+  body.cover-banner .profile{margin-top:14px;}
+
+  /* body */
+  main{max-width:var(--maxw); margin:0 auto; padding:8px 40px 100px;}
+  section{padding-top:46px;}
+  .sec-head{display:flex; align-items:baseline; justify-content:space-between; gap:16px; border-top:1.5px solid var(--ink); padding-top:10px; margin-bottom:22px;}
+  .sec-head h2{font-family:var(--display); font-weight:500; font-size:clamp(1.25rem,2.3vw,1.7rem); letter-spacing:-.01em; margin:0;}
+  .sec-meta{font-family:var(--mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); white-space:nowrap;}
+  /* no top rule above the first section (it sits directly under the header) */
+  main > section:first-child .sec-head{border-top:none; padding-top:0;}
+  /* headerless cut (hideHero): no stray top rule / gap above the first section */
+  body.no-hero main > section:first-child{padding-top:8px;}
+  body.no-hero main > section:first-child .sec-head{border-top:none; padding-top:0;}
+
+  .entry{display:grid; grid-template-columns:128px 1fr; gap:0 28px; padding:0 0 26px;}
+  .entry .when{font-family:var(--mono); font-size:11.5px; letter-spacing:.03em; color:var(--muted); padding-top:3px;}
+  .entry .role{font-family:var(--display); font-weight:500; font-size:1.04rem; letter-spacing:-.005em; margin:0 0 5px; color:var(--ink);}
+  .entry .desc{font-family:var(--serif); font-size:1rem; color:#3a3933; margin:0; max-width:62ch;}
+  .entry .desc-list{font-family:var(--serif); font-size:1rem; color:#3a3933; margin:0; padding-left:15px; max-width:62ch;}
+  .entry .desc-list li{margin-top:3px;}
+  .entry .desc-list li:first-child{margin-top:0;}
+  .entry .desc-list li::marker{color:var(--faint); font-size:.7em;}
+  .tags{margin-top:9px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;}
+  .tags span{font-family:var(--mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--muted); border:1px solid var(--rule); border-radius:2px; padding:3px 7px;}
+  .projlink{font-family:var(--mono); font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--accent); border:1px solid var(--accent); border-radius:2px; padding:3px 8px; text-decoration:none; display:inline-flex; align-items:center; gap:5px; transition:background .15s ease,color .15s ease;}
+  .projlink:hover{background:var(--accent); color:#fff;}
+  .projlink .arr{font-size:11px; line-height:1;}
+
+  .row{display:grid; grid-template-columns:128px 1fr auto; gap:0 28px; padding:9px 0; border-bottom:1px solid var(--rule); align-items:baseline;}
+  .row:last-child{border-bottom:none;}
+  .row .when{font-family:var(--mono); font-size:11.5px; color:var(--muted);}
+  .row .what{font-family:var(--display); font-weight:400; font-size:.99rem;}
+  .row .what em{font-style:normal; color:var(--muted); font-family:var(--serif);}
+
+  .prose{font-family:var(--serif); font-size:1.02rem; color:#3a3933; max-width:70ch; margin:0;}
+  .skills{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 40px;}
+  .skill .lab{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); display:block; margin-bottom:3px;}
+  .skill .val{font-family:var(--display); font-weight:400; font-size:.97rem; color:var(--ink);}
+
+  footer{max-width:var(--maxw); margin:0 auto; padding:0 40px 60px; font-family:var(--mono); font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--faint); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap;}
+
+  .reveal{opacity:0; transform:translateY(14px); transition:opacity .6s ease, transform .6s ease;}
+  .reveal.in{opacity:1; transform:none;}
+
+  @media (max-width:680px){
+    .hero-inner{padding:96px 22px 34px;}
+    main{padding:8px 22px 70px;} footer{padding:0 22px 50px;}
+    .colophon{grid-template-columns:1fr; gap:5px;}
+    .entry{grid-template-columns:1fr; gap:4px;}
+    .entry .when{padding-top:0; margin-bottom:2px;}
+    .row{grid-template-columns:1fr auto;} .row .when{grid-column:1 / -1;}
+    .skills{grid-template-columns:1fr;}
+  }
+  @media (prefers-reduced-motion:reduce){ .reveal{opacity:1; transform:none; transition:none;} }
+
+  /* ── Paged.js download mode (on-demand pagination — see exportPDF() in the script) ──
+     When the user hits "Save PDF", Paged.js paginates a clone of the CV into real .pagedjs_page
+     nodes inside #paged-target; we swap to that view, print it, then restore the live page. */
+  #paged-target{ display:none; }
+  #paged-status{ display:none; }
+  body.paged-ready{ display:block; background:#fff; }
+  body.paged-ready > :not(#paged-target):not(#paged-status):not(script){ display:none !important; }
+  body.paged-ready #paged-target{ display:block; }
+  body.paging #paged-status{
+    display:flex; position:fixed; inset:0; z-index:100; align-items:center; justify-content:center;
+    background:var(--paper); font-family:var(--mono); font-size:12px; letter-spacing:.12em;
+    text-transform:uppercase; color:var(--muted);
+  }
+
+  /* print fallback: if Paged.js can't load we still get a usable native print (no @page here so
+     Paged.js's own injected @page wins in the paged path; the cover stays full-cover via .hero). */
+  @media print{
+    .toolbar,.backlink,.devswitch{display:none !important;}
+    body{background:#fff; display:flex; flex-direction:column; min-height:100vh;}
+    footer{margin-top:auto; padding:10px 0 0; border-top:1px solid var(--rule);}  /* pin to bottom of last page */
+    .hero{page:cover; break-after:page; page-break-after:always; background:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+    .hero-inner{height:100vh; min-height:0; padding:0.85in 0.8in; justify-content:flex-end;}
+    .name{font-size:3.6rem;}
+    main{padding:0;}
+    section{padding-top:3px;}
+    main > section:first-child{padding-top:0;}
+    .sec-head{break-after:avoid; page-break-after:avoid; margin-bottom:3px; padding-top:3px;}
+    .entry,.row{break-inside:avoid; page-break-inside:avoid;}
+    /* tight vertical rhythm for print only */
+    .entry{padding-bottom:2px; gap:0 22px;}
+    .entry .role{margin-bottom:1px; font-size:0.98rem;}
+    .entry .desc{font-size:0.87rem; line-height:1.2; max-width:none;}
+    .entry .desc-list{font-size:0.87rem; line-height:1.2; max-width:none;}
+    .entry .when{padding-top:2px;}
+    .tags{margin-top:2px;}
+    .row{padding:2px 0;}
+    .skills{gap:3px 36px;}
+    .skill .val{font-size:0.92rem;}
+    .prose{font-size:0.95rem; line-height:1.35;}
+    .reveal{opacity:1 !important; transform:none !important;}
+    .herovideo{display:none !important;}
+    body.has-video #art{opacity:1 !important;}
+    a{color:inherit;}
+    .projlink{border-color:#bbb !important; color:#555 !important;}
+    .tagline,.colophon{text-shadow:none !important;}   /* see cv-print.css: shadows double the text in the PDF layer */
+
+    /* banner cover: a full-bleed header strip at the top of page one */
+    body.cover-banner .hero{page:auto; break-after:auto; page-break-after:auto;
+      width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+      margin-top:0;}                                /* full-width band; no top bleed so the name never clips */
+    body.cover-banner .hero-inner{height:auto; min-height:0;
+      padding:0.22in 0.2in 0.18in;}                /* re-inset text to align with the 0.2in body margin */
+    body.cover-banner .name{font-size:1.5rem;}
+    body.cover-banner .tagline{margin-top:6px;}
+    body.cover-banner .colophon{margin-top:8px; gap:3px 40px;}
+    body.cover-banner .profile{margin-top:7px; font-size:0.92rem;}
+    body.cover-banner main > section:first-child{padding-top:18px;}
+  }
+</style>
+<!-- Paged.js (web-to-print). auto:false → it never runs on page load; exportPDF() invokes it on demand. -->
+<script>window.PagedConfig = { auto: false };</script>
+<script defer src="https://unpkg.com/pagedjs@0.4.3/dist/paged.polyfill.js"></script>
+</head>
+<body>
+
+<a class="backlink" id="backlink" href="/">&#8592; Back to website</a>
+<div class="toolbar">
+  <button id="regen" title="Reroll the generative artwork">&#8635; Regenerate art</button>
+  <button id="print" title="Print or save as PDF">&#9113; Save PDF</button>
+</div>
+
+<header class="hero">
+  <canvas id="art"></canvas>
+  <div class="hero-inner" id="hero-inner"></div>
+</header>
+
+<main id="cv-main"></main>
+<footer id="cv-footer"></footer>
+
+<!-- Paged.js renders the paginated, printable CV here (shown only while saving the PDF) -->
+<div id="paged-target" aria-hidden="true"></div>
+<div id="paged-status">Preparing PDF…</div>
+
+<script>
+/* ============ load the content, then render ============ */
+(function(){
+  // Load the master data file, then the per-variant files it lists in
+  // CV.variantManifest (each registers into CV.variants), THEN render.
+  // A variant file that fails to load is skipped — the full CV still works.
+  var params = new URLSearchParams(location.search);
+  var dataFile = params.get('data') || 'cv-data.js';
+  function loadScript(src, onload, onerror){
+    var s = document.createElement('script');
+    s.src = src; s.onload = onload; if(onerror) s.onerror = onerror;
+    document.head.appendChild(s);
+  }
+  function loadVariantsThenInit(){
+    var CV = window.CV || {};
+    var manifest = CV.variantManifest || [];
+    var dir = CV.variantsDir || 'cv-variants/';
+    var i = 0;
+    (function next(){
+      if(i >= manifest.length){ init(); return; }
+      var stem = manifest[i++];
+      loadScript(dir + stem + '.js', next, function(){
+        console.warn('[cv] variant file failed to load, skipping: ' + dir + stem + '.js');
+        next();
+      });
+    })();
+  }
+  loadScript(dataFile, loadVariantsThenInit, function(){
+    document.getElementById('cv-main').innerHTML =
+      '<p style="font-family:monospace;padding:40px 0;color:#a33">Could not load <b>'+dataFile+'</b>. Make sure it sits next to cv.html.</p>';
+  });
+})();
+
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+/* ============ dev-only variant switcher ============
+   This is a static file with no build step, so "am I local?" is detected from the
+   host: localhost / 127.0.0.1 / file:// / *.local. `?dev=1` forces it on anywhere
+   (handy for previewing cuts on a deployed URL). It never appears on a public
+   domain, and is hidden from the printed/PDF output regardless. */
+function isDevMode(){
+  if(new URLSearchParams(location.search).has('dev')) return true;
+  var h = location.hostname;
+  return h === '' || h === 'localhost' || h === '127.0.0.1' || h === '0.0.0.0' || /\.local$/.test(h);
+}
+
+function variantLabel(key, v){
+  if(v && v.label) return v.label;                 // optional `label:` on a variant wins
+  return key.replace(/[-_]+/g, ' ')
+            .replace(/\b\w/g, function(c){ return c.toUpperCase(); });
+}
+function variantGroup(v){ return (v && v.group) ? v.group : 'Other'; }  // optional `group:` family
+
+function renderDevSwitch(){
+  if(!isDevMode()) return;
+  if(document.querySelector('.devswitch')) return;
+  var variants = (window.CV && window.CV.variants) || {};
+  var current  = new URLSearchParams(location.search).get('role') || '';
+  function href(role){
+    var p = new URLSearchParams(location.search);
+    if(role) p.set('role', role); else p.delete('role');
+    var qs = p.toString();
+    return location.pathname + (qs ? '?' + qs : '');
+  }
+
+  // Bucket variants by family, preserving first-seen group order; "Other" sinks last.
+  var order = [], byGroup = {}, count = 0;
+  Object.keys(variants).forEach(function(k){
+    if(k === '_template') return;
+    count++;
+    var g = variantGroup(variants[k]);
+    if(!byGroup[g]){ byGroup[g] = []; order.push(g); }
+    byGroup[g].push({ key:k, name:variantLabel(k, variants[k]) });
+  });
+  order.sort(function(a,b){ return (a==='Other'?1:0) - (b==='Other'?1:0); });
+
+  var curName = (current && variants[current]) ? variantLabel(current, variants[current]) : 'Full CV';
+
+  function row(key, name, group){
+    var active = (key === current) ? ' active' : '';
+    var hay = (name + ' ' + (group||'')).toLowerCase();
+    return '<a class="'+active.trim()+'" data-hay="'+esc(hay)+'" href="'+esc(href(key))+'">'+esc(name)+'</a>';
+  }
+  var rows = row('', 'Full CV', '');                 // pinned: clears ?role
+  order.forEach(function(g){
+    rows += '<div class="devswitch__group">'+esc(g)+'</div>';
+    byGroup[g].forEach(function(it){ rows += row(it.key, it.name, g); });
+  });
+
+  var wrap = document.createElement('div');
+  wrap.className = 'devswitch';
+  wrap.innerHTML =
+    '<button class="devswitch__toggle" type="button" aria-haspopup="true">'+
+      '<span class="lbl">Variant</span>'+
+      '<span class="cur">'+esc(curName)+'</span>'+
+      '<span class="caret">▾</span>'+
+    '</button>'+
+    '<div class="devswitch__panel" role="menu">'+
+      '<input class="devswitch__search" type="text" placeholder="Filter '+count+' variants…" autocomplete="off" />'+
+      '<div class="devswitch__list">'+rows+'</div>'+
+      '<div class="devswitch__empty">No match</div>'+
+    '</div>';
+  document.body.appendChild(wrap);
+
+  var toggle = wrap.querySelector('.devswitch__toggle');
+  var search = wrap.querySelector('.devswitch__search');
+  var list   = wrap.querySelector('.devswitch__list');
+  var empty  = wrap.querySelector('.devswitch__empty');
+
+  function filter(q){
+    q = q.trim().toLowerCase();
+    var any = false;
+    list.querySelectorAll('a').forEach(function(a){
+      var hit = !q || a.getAttribute('data-hay').indexOf(q) >= 0;
+      a.style.display = hit ? '' : 'none';
+      if(hit) any = true;
+    });
+    list.querySelectorAll('.devswitch__group').forEach(function(h){
+      var n = h.nextElementSibling, vis = false;
+      while(n && !n.classList.contains('devswitch__group')){
+        if(n.tagName === 'A' && n.style.display !== 'none'){ vis = true; break; }
+        n = n.nextElementSibling;
+      }
+      h.style.display = vis ? '' : 'none';
+    });
+    empty.style.display = any ? 'none' : 'block';
+  }
+
+  function open(){ wrap.classList.add('open'); search.value = ''; filter(''); setTimeout(function(){ search.focus(); }, 0); }
+  function close(){ wrap.classList.remove('open'); }
+  toggle.addEventListener('click', function(){ wrap.classList.contains('open') ? close() : open(); });
+  search.addEventListener('input', function(){ filter(search.value); });
+  document.addEventListener('click', function(e){ if(!wrap.contains(e.target)) close(); });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape') close();
+    if(e.key === 'Enter' && wrap.classList.contains('open')){
+      var first = list.querySelector('a:not([style*="display: none"])');
+      if(first) location.href = first.getAttribute('href');
+    }
+  });
+}
+
+/* ============ variant layer ============
+   One master cv-data.js is the source of truth. A variant tailors it for a
+   specific application by filtering items by `tracks`, reordering / hiding /
+   renaming sections, overriding fields per item id, and swapping tagline etc.
+   Activate with ?role=splice  (no role = full CV, unchanged). */
+function applyVariant(CV){
+  var role = new URLSearchParams(location.search).get('role') || CV.defaultRole;
+  if(role === 'full' || role === 'none') return CV;   // ?role=full always escapes back to the full CV
+  if(!role || !CV.variants || !CV.variants[role]) return CV;
+  var v = CV.variants[role];
+  var out = {};
+  for(var k in CV){ out[k] = CV[k]; }
+  if(v.theme)        out.theme   = v.theme;
+  if(v.tagline)      out.tagline = v.tagline;
+  if(v.profile!=null)out.profile = v.profile;
+  if(v.heroVideo!==undefined) out.heroVideo = v.heroVideo;
+  if(v.colophon)     out.colophon = v.colophon;
+  if(v.name!==undefined) out.name = v.name;   // variant can blank/replace the hero name (anonymized review)
+  if(v.hideHero)     out.hideHero = v.hideHero;   // drop the entire hero banner (headerless résumé)
+  if(v.cover)        out.cover    = v.cover;
+  if(v.hideFooter)   out.hideFooter = v.hideFooter;
+
+  var tracks    = v.tracks || null;
+  var overrides = v.overrides || {};
+  var hide      = v.hide || [];
+  var exclude   = v.exclude || [];              // item ids to drop regardless of tracks
+
+  function keep(it){
+    if(it.id && exclude.indexOf(it.id) >= 0) return false;
+    if(!tracks) return true;
+    if(!it.tracks) return true;                 // untagged items always show
+    return it.tracks.some(function(t){ return tracks.indexOf(t) >= 0; });
+  }
+  function override(it){
+    var r = (it.id && overrides[it.id]) ? Object.assign({}, it, overrides[it.id]) : it;
+    if(v.hideLinks && r.link){ r = Object.assign({}, r); r.link = null; }   // drop "View project" buttons
+    return r;
+  }
+
+  out.sections = (CV.sections||[])
+    .filter(function(sec){ return hide.indexOf(sec.title) < 0; })
+    .map(function(sec){
+      var ns = {}; for(var k in sec){ ns[k] = sec[k]; }
+      if(ns.items) ns.items = ns.items.filter(keep).map(override);
+      if(ns.rows)  ns.rows  = ns.rows.filter(keep);
+      if(ns.type === 'skills' && v.skills) ns.items = v.skills;   // per-variant skills list
+      if(v.rows && v.rows[sec.title]) ns.rows = v.rows[sec.title]; // per-variant row list (e.g. trimmed awards)
+      return ns;
+    })
+    .filter(function(sec){                       // drop sections emptied by filtering
+      if(sec.type==='entries') return (sec.items&&sec.items.length) || (sec.rows&&sec.rows.length);
+      if(sec.type==='rows')    return sec.rows && sec.rows.length;
+      return true;                               // prose / skills always kept
+    });
+
+  if(v.order){
+    out.sections.sort(function(a,b){
+      var ia=v.order.indexOf(a.title), ib=v.order.indexOf(b.title);
+      return (ia<0?999:ia) - (ib<0?999:ib);
+    });
+  }
+  if(v.rename){
+    out.sections.forEach(function(sec){ if(v.rename[sec.title]) sec.title = v.rename[sec.title]; });
+  }
+  return out;
+}
+
+function init(){
+  var CV = window.CV;
+  if(!CV){ return; }
+  CV = applyVariant(CV);
+  if(CV.theme) document.body.classList.add('theme-' + CV.theme);
+  if(CV.cover) document.body.classList.add('cover-' + CV.cover);
+  if(CV.heroVideo){
+    document.body.classList.add('has-video');
+    var v = document.createElement('video');
+    v.className = 'herovideo';
+    v.src = CV.heroVideo; v.autoplay = true; v.muted = true; v.loop = true;
+    v.playsInline = true; v.setAttribute('playsinline','');
+    var hero = document.querySelector('.hero');
+    hero.insertBefore(v, document.getElementById('hero-inner'));
+    var rg = document.getElementById('regen'); if(rg) rg.style.display = 'none';
+  }
+  window.__CV_NAME__ = Array.isArray(CV.name)? CV.name.join(' ') : CV.name;
+  window.__CV_HIDEHERO__ = !!CV.hideHero;
+  document.title = window.__CV_NAME__ + ' — CV';
+  document.getElementById('backlink').setAttribute('href', CV.backHref || '/');
+  if(CV.hideHero){
+    document.body.classList.add('no-hero');
+    var heroEl = document.querySelector('.hero'); if(heroEl) heroEl.style.display = 'none';
+    var rgBtn = document.getElementById('regen'); if(rgBtn) rgBtn.style.display = 'none';
+  } else {
+    renderHero(CV);
+  }
+  renderMain(CV);
+  renderFooter(CV);
+  if(!CV.hideHero) startArt(CV);
+  var printBtn = document.getElementById('print'); if(printBtn) printBtn.addEventListener('click', exportPDF);
+  renderDevSwitch();
+  observeReveals();
+}
+
+function renderHero(CV){
+  var nameLines = Array.isArray(CV.name) ? CV.name : [CV.name];
+  var colo = (CV.colophon||[]).map(function(c){
+    var val = c.href
+      ? '<a href="'+esc(c.href)+'">'+esc(c.v)+'</a>'
+      : '<span class="v">'+esc(c.v)+'</span>';
+    return '<div><span class="k">'+esc(c.k)+'</span>'+val+'</div>';
+  }).join('');
+  var profile = CV.profile ? '<p class="profile">'+esc(CV.profile)+'</p>' : '';
+  document.getElementById('hero-inner').innerHTML =
+    '<h1 class="name">'+nameLines.map(esc).join('&nbsp;<br>')+'</h1>'+   /* &nbsp; (not a plain space, which HTML collapses) so the PDF text layer reads "Jane Doe", not "JaneDoe" */
+    (CV.tagline ? '<p class="tagline">'+esc(CV.tagline)+'</p>' : '')+
+    '<div class="colophon">'+colo+'</div>'+ profile;
+}
+
+function entryHTML(it){
+  var tags = (it.tags||[]).map(function(t){ return '<span>'+esc(t)+'</span>'; }).join('');
+  var link = it.link
+    ? '<a class="projlink" href="'+esc(it.link.href)+'" target="_blank" rel="noopener noreferrer">'+
+        esc(it.link.label||'View project')+' <span class="arr">&#8599;</span></a>'
+    : '';
+  var meta = (tags || link) ? '<div class="tags">'+tags+link+'</div>' : '';
+  return '<div class="entry reveal">'+
+      '<div class="when">'+esc(it.when)+'</div>'+
+      '<div class="body">'+
+        '<p class="role">'+esc(it.role)+'</p>'+
+        (it.bullets && it.bullets.length
+           ? '<ul class="desc-list">'+it.bullets.map(function(b){ return '<li>'+esc(b)+'</li>'; }).join('')+'</ul>'
+           : (it.desc? '<p class="desc">'+esc(it.desc)+'</p>' : ''))+
+        meta+
+      '</div>'+
+    '</div>';
+}
+function rowHTML(r){
+  var note = r.note ? ' <em>— '+esc(r.note)+'</em>' : '';
+  return '<div class="row reveal"><div class="when">'+esc(r.when||'')+'</div>'+
+    '<div class="what">'+esc(r.what)+note+'</div><div></div></div>';
+}
+
+function renderMain(CV){
+  // Drop sections with nothing to show, so scaffolded/empty categories never
+  // render a blank header (mirrors the empty-section drop in applyVariant).
+  function hasContent(sec){
+    if(sec.type==='entries') return (sec.items&&sec.items.length) || (sec.rows&&sec.rows.length);
+    if(sec.type==='rows')    return sec.rows && sec.rows.length;
+    if(sec.type==='prose')   return !!sec.text;
+    if(sec.type==='skills')  return sec.items && sec.items.length;
+    return true;
+  }
+  var html = (CV.sections||[]).filter(hasContent).map(function(sec){
+    var head = '<div class="sec-head"><h2>'+esc(sec.title)+'</h2>'+
+               (sec.meta? '<span class="sec-meta">'+esc(sec.meta)+'</span>' : '')+'</div>';
+    var body = '';
+    if(/awards/i.test(sec.title) && sec.rows){
+      sec.rows = sec.rows.slice().sort(function(a,b){
+        function y(r){ var m=String(r.when||'').match(/\d{4}/); return m? +m[0] : 0; }
+        return y(b) - y(a);
+      });
+    }
+    if(sec.type === 'entries'){
+      body = (sec.items||[]).map(entryHTML).join('') + (sec.rows||[]).map(rowHTML).join('');
+    } else if(sec.type === 'rows'){
+      body = (sec.rows||[]).map(rowHTML).join('');
+    } else if(sec.type === 'prose'){
+      body = '<p class="prose reveal">'+esc(sec.text)+'</p>';
+    } else if(sec.type === 'skills'){
+      body = '<div class="skills reveal">'+(sec.items||[]).map(function(k){
+        return '<div class="skill"><span class="lab">'+esc(k.label)+'</span><span class="val">'+esc(k.value)+'</span></div>';
+      }).join('')+'</div>';
+    }
+    return '<section>'+head+body+'</section>';
+  }).join('');
+  document.getElementById('cv-main').innerHTML = html;
+}
+
+function renderFooter(CV){
+  if(CV.hideFooter){ document.getElementById('cv-footer').style.display = 'none'; return; }
+  var name = Array.isArray(CV.name)? CV.name.join(' ') : CV.name;
+  document.getElementById('cv-footer').innerHTML =
+    /* the footer's right-hand side is whichever colophon row looks like your site */
+    '<span>'+esc(name)+' — Curriculum Vitae</span><span>'+esc((CV.colophon||[]).reduce(function(a,c){return /^(web|site|portfolio)$/i.test(c.k) ? c.v : a;},''))+'</span>';
+}
+
+function observeReveals(){
+  var els = document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){ els.forEach(function(e){e.classList.add('in');}); return; }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+  },{threshold:0.12});
+  els.forEach(function(e){ io.observe(e); });
+}
+
+/* ============ generative hero ============ */
+function startArt(CV){
+  var canvas = document.getElementById('art'), ctx = canvas.getContext('2d');
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var W,H,DPR,ribbons,seed,raf,t0;
+
+  var PALETTES = {
+    default: [[31,31,224],[255,53,42],[120,40,255],[255,120,30]],
+    warm:    [[244,242,236],[196,193,186],[150,140,120],[181,137,90]],
+    chanel:  [[244,242,236],[196,193,186],[150,140,120],[176,148,92]]
+  };
+  var PALETTE = PALETTES[CV.theme] || PALETTES.default;
+
+  function rng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+
+  function build(sd){
+    var r=rng(sd); ribbons=[]; var n=5+Math.floor(r()*3);
+    for(var i=0;i<n;i++){
+      var pts=[], segs=5, baseY=r()*H;
+      for(var j=0;j<=segs;j++){ pts.push({x:(j/segs)*W*1.2-W*0.1, y:baseY+(r()-0.5)*H*0.9, amp:40+r()*120, ph:r()*Math.PI*2, sp:0.15+r()*0.4}); }
+      var ca=PALETTE[Math.floor(r()*PALETTE.length)], cb=PALETTE[Math.floor(r()*PALETTE.length)];
+      if(cb===ca) cb=PALETTE[(PALETTE.indexOf(ca)+1)%PALETTE.length];
+      ribbons.push({pts:pts, ca:ca, cb:cb, w:60+r()*150, blur:30+r()*60});
+    }
+  }
+  function resize(){
+    DPR=Math.min(window.devicePixelRatio||1,2);
+    var rect=canvas.getBoundingClientRect(); W=rect.width; H=rect.height;
+    canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    build(seed); draw(0);
+  }
+  function yAt(p,time){ return p.y + Math.sin(time*0.0004*p.sp + p.ph)*p.amp*(reduce?0:1); }
+  function draw(time){
+    ctx.clearRect(0,0,W,H); ctx.fillStyle='#000'; ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='lighter';
+    ribbons.forEach(function(rb){
+      ctx.save(); ctx.filter='blur('+rb.blur+'px)'; ctx.lineWidth=rb.w; ctx.lineCap='round';
+      var g=ctx.createLinearGradient(0,0,W,H);
+      g.addColorStop(0,'rgba('+rb.ca.join(',')+',0.55)'); g.addColorStop(1,'rgba('+rb.cb.join(',')+',0.55)');
+      ctx.strokeStyle=g; ctx.beginPath(); var p=rb.pts;
+      for(var i=0;i<p.length;i++){ var yy=yAt(p[i],time);
+        if(i===0) ctx.moveTo(p[i].x,yy);
+        else { var px=(p[i-1].x+p[i].x)/2, py=(yAt(p[i-1],time)+yy)/2; ctx.quadraticCurveTo(p[i-1].x,yAt(p[i-1],time),px,py); } }
+      ctx.stroke(); ctx.restore();
+    });
+    ctx.globalCompositeOperation='source-over';
+  }
+  var staticOnly = reduce || !!CV.heroVideo;
+  function loop(time){ if(!t0)t0=time; draw(time-t0); raf=requestAnimationFrame(loop); }
+  function start(){ if(raf)cancelAnimationFrame(raf); t0=0; if(staticOnly) draw(0); else raf=requestAnimationFrame(loop); }
+
+  seed=424242; resize(); start();
+  window.addEventListener('resize', resize);
+  document.getElementById('regen').addEventListener('click', function(){ seed=(Math.random()*1e9)|0; build(seed); if(staticOnly) draw(0); });
+}
+
+/* ============ PDF export via Paged.js ============
+   Paginates a clone of the live CV (cover + body + footer) into real pages — page numbers, a
+   running header, and a full-bleed cover — instead of leaning on the browser's print engine.
+   Shape: new Previewer().preview(content, ['./cv-print.css'], target).
+   The stylesheet path is RELATIVE on purpose — an absolute '/cv-print.css' resolves to
+   the filesystem root when this page is opened from disk, and the PDF loses all styling.
+   Falls back to a plain window.print() if the Paged.js polyfill didn't load. */
+function buildPrintContent(){
+  var name = window.__CV_NAME__ || document.title.replace(/ — CV$/, '');
+  var heroHTML = '';
+  if(!window.__CV_HIDEHERO__){
+    // clone the hero and snapshot the generative <canvas> to an <img> (a cloned canvas is blank)
+    var hero = document.querySelector('.hero').cloneNode(true);
+    var srcCanvas = document.getElementById('art');
+    var cloneCanvas = hero.querySelector('canvas');
+    if(cloneCanvas && srcCanvas){
+      var img = document.createElement('img');
+      img.className = 'art-img';
+      try { img.src = srcCanvas.toDataURL('image/png'); } catch(e){ /* tainted canvas — skip art */ }
+      cloneCanvas.parentNode.replaceChild(img, cloneCanvas);
+    }
+    var vid = hero.querySelector('.herovideo'); if(vid && vid.parentNode) vid.parentNode.removeChild(vid);
+    hero.removeAttribute('id');
+    Array.prototype.forEach.call(hero.querySelectorAll('[id]'), function(e){ e.removeAttribute('id'); });
+    heroHTML = hero.outerHTML;
+  }
+  var main = document.getElementById('cv-main').cloneNode(true);
+  var foot = document.getElementById('cv-footer').cloneNode(true);
+  // drop ids from the clones so the paginated copy never duplicates an id
+  [main, foot].forEach(function(node){
+    if(node.removeAttribute) node.removeAttribute('id');
+    if(node.querySelectorAll) Array.prototype.forEach.call(node.querySelectorAll('[id]'), function(e){ e.removeAttribute('id'); });
+  });
+  /* Paged.js honours neither break-after:avoid on .sec-head nor break-before:avoid on the
+     entry after it, so a heading strands at the foot of a page. Glue each heading to its
+     first entry in one wrapper and let break-inside:avoid carry the pair across together. */
+  Array.prototype.forEach.call(main.querySelectorAll('.sec-head'), function(head){
+    var first = head.nextElementSibling;
+    if(!first) return;
+    var keep = document.createElement('div');
+    keep.className = 'sec-keep';
+    head.parentNode.insertBefore(keep, head);
+    keep.appendChild(head);
+    keep.appendChild(first);
+  });
+  return '<div class="cv-runhead">'+esc(name)+' — CV</div>' + heroHTML + main.outerHTML + foot.outerHTML;
+}
+
+/* Chrome names the saved PDF after document.title, so retitle around the print call and
+   put it back afterwards. "Resume_Jane_Doe_2026-01-30" beats "Résumé.pdf", which the
+   browser dedups into Résumé (2), Résumé (3) and which tells a recruiter nothing in a
+   downloads folder. The ?role= key is appended when one is active, so same-day exports
+   of different cuts never collide and the file says which cut it is:
+   Resume_Jane_Doe_product_2026-01-30. A plain cv.html omits it. */
+function printFilename(){
+  var name = (window.__CV_NAME__ || document.title.replace(/ — CV$/, '') || 'CV')
+               .replace(/\s+/g, '_').replace(/[^A-Za-z0-9_-]/g, '');
+  var role = (new URLSearchParams(location.search).get('role') || '').replace(/[^A-Za-z0-9_-]/g, '');
+  var d = new Date(), pad = function(n){ return (n < 10 ? '0' : '') + n; };
+  return 'Resume_' + name + (role ? '_' + role : '') +
+         '_' + d.getFullYear() + '-' + pad(d.getMonth()+1) + '-' + pad(d.getDate());
+}
+
+function printWithFilename(){
+  var original = document.title;
+  document.title = printFilename();
+  var restore = function(){ document.title = original; window.removeEventListener('afterprint', restore); };
+  window.addEventListener('afterprint', restore);
+  setTimeout(restore, 60000);          // belt and braces if afterprint never fires
+  window.print();
+}
+
+function exportPDF(){
+  var btn = document.getElementById('print');
+  // fallback: polyfill missing → native print with the @media print fallback styles
+  if(!(window.Paged && window.Paged.Previewer)){ printWithFilename(); return; }
+
+  var label = btn ? btn.textContent : '';
+  if(btn){ btn.disabled = true; btn.textContent = '⟳ Preparing'; }
+
+  // snapshot the live (visible) CV first, THEN swap to the paginated view
+  var content = buildPrintContent();
+  var target = document.getElementById('paged-target');
+  target.innerHTML = '';
+  document.body.classList.add('paged-ready', 'paging');   // show (measurable) target, hide live view
+
+  new window.Paged.Previewer().preview(content, ['./cv-print.css'], target)
+    .then(function(){
+      document.body.classList.remove('paging');
+      if(btn){ btn.disabled = false; btn.textContent = label; }
+      // let the paged layout settle one frame, then open the print / save-as-PDF dialog
+      requestAnimationFrame(function(){ setTimeout(function(){ printWithFilename(); }, 80); });
+    })
+    .catch(function(err){
+      console.error('[cv] Paged.js export failed — falling back to native print:', err);
+      document.body.classList.remove('paged-ready', 'paging');
+      if(btn){ btn.disabled = false; btn.textContent = label; }
+      printWithFilename();
+    });
+}
+
+/* restore the live, scrolling CV once the print dialog closes (fires on print OR cancel) */
+window.addEventListener('afterprint', function(){
+  document.body.classList.remove('paged-ready', 'paging');
+  var t = document.getElementById('paged-target'); if(t) t.innerHTML = '';
+});
+</script>
+</body>
+</html>

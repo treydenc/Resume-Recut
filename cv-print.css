@@ -1,0 +1,174 @@
+/* cv-print.css
+   Paged.js book stylesheet for the PDF export. Handed to Paged.js by cv.html's exportPDF():
+   new Previewer().preview(content, ['./cv-print.css'], target).
+
+   This file is ONLY ever loaded by Paged.js, and every visual rule is scoped to .pagedjs_page,
+   so it can never affect the live, on-screen CV. The colour/typography tokens (--ink, --mono, …)
+   come from cv.html's :root and resolve here unchanged. */
+
+/* ── every body page ─────────────────────────────────────────────────────────── */
+@page {
+  size: Letter;
+  margin: 0.5in 0.6in 0.55in;
+
+  @top-center {
+    content: string(cvname);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--faint);
+  }
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: var(--mono);
+    font-size: 8px;
+    letter-spacing: 0.08em;
+    color: var(--faint);
+  }
+}
+
+/* the running header reads its text from a zero-height source injected at the top of the flow */
+.cv-runhead {
+  string-set: cvname content(text);
+  font-size: 0 !important;
+  line-height: 0 !important;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  color: transparent;
+}
+
+/* ── named cover page: full bleed, no header / no folio ──────────────────────── */
+.pagedjs_page .hero { page: cover; }
+@page cover {
+  margin: 0;
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+@page :blank {
+  @top-center { content: none; }
+  @bottom-center { content: none; }
+}
+/* never repeat the name in the running header on page one — the cover (or banner) already shows it */
+@page :first {
+  @top-center { content: none; }
+}
+
+/* ── cover: fill the page, keep the generative art (snapshotted to an <img>) ──── */
+.pagedjs_page .hero {
+  position: relative;
+  height: 100%;
+  background: #000 !important;
+  color: #fff;
+  overflow: hidden;
+  break-after: page;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pagedjs_page .hero .art-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+}
+.pagedjs_page .hero-inner {
+  height: 100%;
+  min-height: 0;
+  padding: 0.8in 0.75in;
+  justify-content: flex-end;
+}
+.pagedjs_page .name { font-size: 3.4rem; }
+.pagedjs_page .herovideo { display: none !important; }
+
+/* ── banner cover (variant cover:"banner") ───────────────────────────────────────
+   A slim header strip at the top of page one instead of a full cover page: the body
+   flows in right underneath, and folios + the running header appear on every page.
+   Set per-application in cv-data.js with cover:"banner" (see the _template variant). */
+body.cover-banner .pagedjs_page .hero {
+  page: auto;
+  height: auto;
+  min-height: 0;
+  width: auto;          /* override the legacy @media-print 100vw full-bleed band (overflows a paged page) */
+  break-after: avoid;
+  break-inside: avoid;
+  margin: 0 0 16px;
+}
+body.cover-banner .pagedjs_page .hero-inner {
+  height: auto;
+  min-height: 0;
+  padding: 16px 22px;
+  justify-content: flex-end;
+}
+body.cover-banner .pagedjs_page .name { font-size: 1.6rem; }
+body.cover-banner .pagedjs_page .tagline { margin-top: 8px; }
+body.cover-banner .pagedjs_page .colophon { margin-top: 10px; gap: 3px 36px; }
+
+/* ATS: Skia paints a text-shadow by writing the glyph run TWICE into the PDF content
+   stream, so every shadowed string extracts as "EMAILEMAIL you@example.comyou@example.com"
+   and resume parsers store an invalid address. The shadow only ever existed to lift type off
+   the hero artwork, which print drops anyway. Run `npm run ats-check` on an export to see
+   this class of bug for yourself. */
+.pagedjs_page .tagline,
+.pagedjs_page .colophon { text-shadow: none; }
+body.cover-banner .pagedjs_page .profile { margin-top: 8px; font-size: 0.92rem; }
+body.cover-banner .pagedjs_page main > section:first-child { padding-top: 4px; }
+
+/* ── body: tight, book-like vertical rhythm (mirrors the old @media print block) ─ */
+.pagedjs_page main { padding: 0; }
+.pagedjs_page section { padding-top: 6px; }
+/* headerless cut (hideHero): drop the top rule / gap above the first section in the PDF */
+body.no-hero .pagedjs_page main > section:first-child { padding-top: 0; }
+body.no-hero .pagedjs_page main > section:first-child .sec-head { border-top: none; padding-top: 0; }
+.pagedjs_page .sec-head {
+  break-after: avoid;
+  page-break-after: avoid;
+  margin-bottom: 5px;
+  padding-top: 4px;
+}
+.pagedjs_page .entry,
+.pagedjs_page .row { break-inside: avoid; page-break-inside: avoid; }
+
+/* An orphaned section heading ("Professional Experience" alone at the foot of page 1)
+   is the classic Paged.js miss: it applies break-after:avoid inconsistently. Asserting
+   break-before:avoid on whatever follows the heading pushes the pair over together. */
+.pagedjs_page .sec-head + .entry,
+.pagedjs_page .sec-head + .row,
+.pagedjs_page .sec-head + .skills,
+.pagedjs_page .sec-head + .tags,
+.pagedjs_page .sec-head + * { break-before: avoid; page-break-before: avoid; }
+/* built by buildPrintContent(): heading + its first entry, wrapped so they travel together */
+.pagedjs_page .sec-keep { break-inside: avoid; page-break-inside: avoid; }
+
+/* The date column was 128px + 22px gutter for a string ("2024 — Present") that needs ~102px
+   in 11.5px mono. Tightening it widens the text column ~5%, which removes wrapped lines
+   throughout without touching a word. nowrap guarantees a date can never break in two. */
+.pagedjs_page .entry { padding-bottom: 3px; gap: 0 18px; grid-template-columns: 106px 1fr; }
+.pagedjs_page .entry .when { white-space: nowrap; }
+.pagedjs_page .entry .role { margin-bottom: 1px; font-size: 0.98rem; }
+.pagedjs_page .entry .desc { font-size: 0.88rem; line-height: 1.28; max-width: none; }
+.pagedjs_page .entry .desc-list { font-size: 0.88rem; line-height: 1.25; max-width: none; padding-left: 13px; }
+.pagedjs_page .entry .desc-list li { margin-top: 0; }
+.pagedjs_page .entry .desc-list li:first-child { margin-top: 0; }
+.pagedjs_page .entry .when { padding-top: 2px; }
+.pagedjs_page .tags { margin-top: 3px; }
+.pagedjs_page .row { padding: 2px 0; }
+.pagedjs_page .skills { gap: 6px 36px; }
+.pagedjs_page .skill .val { font-size: 0.92rem; }
+.pagedjs_page .prose { font-size: 0.95rem; line-height: 1.35; }
+
+/* links print as ink; project chips lose their loud accent border */
+.pagedjs_page a { color: inherit; }
+.pagedjs_page .projlink { border-color: #bbb !important; color: #555 !important; }
+
+/* reveal-on-scroll is a screen affordance — force everything visible in the PDF */
+.pagedjs_page .reveal { opacity: 1 !important; transform: none !important; }
+
+/* footer flows at the end of the last page (not pinned) */
+.pagedjs_page footer { padding: 12px 0 0; border-top: 1px solid var(--rule); }
+
+/* never paginate the screen-only chrome (also excluded from the content we hand Paged.js) */
+.pagedjs_page .toolbar,
+.pagedjs_page .backlink { display: none !important; }

@@ -1,0 +1,12 @@
+node_modules/
+
+# Your real resume. Fork this repo, keep your own data private, and this line
+# stops a stray `git add .` from publishing your phone number and every company
+# you are quietly applying to.
+cv-data.local.js
+cv-variants/local/
+*.pdf
+!docs/example.pdf
+
+.DS_Store
+Thumbs.db

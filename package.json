@@ -1,0 +1,14 @@
+{
+  "name": "recut",
+  "version": "0.1.0",
+  "description": "One resume, many true versions of you. A data file, per-application variants, and a Paged.js PDF pipeline — no build step.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": ["resume", "cv", "ats", "pagedjs", "job-search", "pdf"],
+  "scripts": {
+    "ats-check": "node tools/ats-check.mjs"
+  },
+  "devDependencies": {
+    "pdfjs-dist": "^4.10.38"
+  }
+}
