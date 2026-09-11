@@ -8,42 +8,187 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <style>
+  /* ═════════════════════════════════════════════════════════════════════════════
+     N=1 TOKENS — PORTABLE
+     Lift this fence whole into another N=1 tool. Nothing in it names a part of
+     this page: it is one ramp, a spacing scale, three type sizes, four radii, a
+     motion scale, and the haze. The second fence maps these onto recut's own
+     furniture and does NOT travel.
+
+     Ratios below are measured, not estimated — `npm run contrast-check` re-reads
+     this file and re-checks every pair. Change a value here, run it again.
+     ═════════════════════════════════════════════════════════════════════════════ */
   :root{
-    --ink:#111110; --paper:#f7f6f2; --muted:#76746c; --faint:#9b998f; --rule:#e3e1d8;
-    /* Cuts panel. Its own ink tokens because --muted/--faint are tuned for large serif
-       body copy on paper; at 11px mono on a darker ground they measure 3.97:1 and 2.42:1
-       against this background, both below the 4.5:1 WCAG AA floor. These are 7.7:1 and
-       5.9:1 — AA comfortably, and AAA for the links people actually click. */
-    --rail:#eae8e0;                         /* one step down from paper */
-    --rail-text:#45433d;                    /* 7.7:1 — cut names, group headings */
-    --rail-dim:#5b5952;                     /* 5.9:1 — captions, status, icon buttons */
-    --accent:#ff352a;                       /* default accent */
+    /* ── Neutral ramp ────────────────────────────────────────────────────────────
+       One warm hue, tints and shades (Pillar 4). Two halves, because a dark
+       surface does not take light-mode technique (Pillar 7): on dark, depth is
+       lightness rather than shadow and rules drop to a whisper — so the dark
+       half is authored, not derived by inverting the light half. */
+    --paper:#f7f6f2;       /* light ground                                      */
+    --rule:#e3e1d8;        /* hairline on paper — decorative                    */
+    --faint:#9b998f;       /* 2.6:1 on paper. DECORATIVE ONLY — never UI text.  */
+    --muted:#76746c;       /* 4.3:1 on paper — borders and icons (the 3:1 class) */
+    --ink-dim:#5d5c58;     /* 6.2:1 on paper, 4.7:1 on light glass — labels     */
+    --ink:#111110;         /* 17.6:1 on paper — body                            */
+
+    --ground:#151211;      /* dark ground                                       */
+    --dim:#9a8d89;         /*  5.8:1 on --ground — captions, status             */
+    --bright:#e9dfdc;      /* 14.6:1 on --ground — names, actions               */
+    --ground-rule:rgba(255,255,255,.10);    /* rules whisper on dark            */
+    --ground-lift:rgba(255,255,255,.06);    /* hover = lighter, not shadowed    */
+    --ground-lift-2:rgba(255,255,255,.11);  /* selected                         */
+
+    /* ── Haze ─────────────────────────────────────────────────────────────────────
+       The one place this system uses more than one hue, and the rule it bends is
+       narrower than it looks. Pillar 4's single-hue preference governs colour
+       that CARRIES MEANING — accents, states, semantics. The haze carries none:
+       it is material, like a shadow. The test it has to keep passing: delete it
+       and no information is lost.
+
+       So it is allowed on chrome that floats over content, and nowhere else.
+       Never inside .hero / main / footer. Never as a state. Never the only
+       signal for anything. Never in print or in the Paged.js export.
+
+       Amplitude is set by measurement, not by the reference it is drawn from.
+       Every pair sitting on a haze is checked at BOTH ends of the gradient
+       rather than at its average, so the ramp can only swing as far as its worst
+       end allows. That is why these alphas are a fraction of the nav bar this
+       imitates: that bar holds four words, the cuts rail holds thirty labels. */
+    --haze-dark:linear-gradient(160deg,
+      rgba(122,110,168,.14) 0%,        /* lavender */
+      rgba(236,226,198,.04) 52%,       /* cream    */
+      rgba(198,142,82,.11) 100%);      /* amber    */
+    --haze-light:linear-gradient(160deg,
+      rgba(164,148,212,.14) 0%,
+      rgba(252,246,230,.18) 52%,
+      rgba(224,172,108,.15) 100%);
+
+    /* Glass floors. Translucency over an UNKNOWN backdrop cannot be measured, so
+       each floor is the opacity at which the worst case still clears AA: the
+       dark pills seen over paper, the light card seen over the black hero.
+       --glass-light lands near-opaque for exactly that reason, which is also the
+       argument against putting glass on anything large. */
+    --glass-dark:rgba(17,17,16,.82);      /* light text ≥ 9:1 over any backdrop   */
+    --glass-light:rgba(250,249,246,.91);  /* --ink-dim ≥ 4.5:1 over any backdrop  */
+    --glass-blur:blur(6px);
+
+    /* ── Spacing — 8 between groups, 4 inside a component ────────────────── */
+    --s-1:4px; --s-2:8px; --s-3:12px; --s-4:16px; --s-5:24px; --s-6:32px;
+
+    /* ── Type — three sizes in the system, at most TWO per component ──────── */
+    --fs-label:10px;       /* uppercase labels, captions, buttons */
+    --fs-ui:11px;          /* pill chrome                        */
+    --fs-ctl:12px;         /* things you click or type            */
     --display:"Space Grotesk","Arial Narrow",sans-serif;
     --mono:"Space Mono","Courier New",monospace;
     --serif:"Newsreader",Georgia,serif;
-    --maxw:940px;
+
+    /* ── Radii ────────────────────────────────────────────────────────────────
+       Measured off the reference rather than guessed: it runs 16px on its 48px
+       controls and 16px on its cards — a rounded rectangle at roughly h/3, NOT a
+       pill. Scaled to this page's ~30px chrome that is --r-btn, which stays on
+       the 4/8 grid. --r-pill is kept so the scale is complete for another tool;
+       nothing here uses it, because the reference doesn't. */
+    --r-sm:2px;            /* inline code, tags        */
+    --r-md:4px;            /* list rows                */
+    --r-btn:8px;           /* every button, every input */
+    --r-lg:16px;           /* cards — the reference's own value */
+    --r-pill:999px;        /* unused here              */
+
+    /* ── Motion ────────────────────────────────────────────────────────────── */
+    --t-hover:120ms;       /* colour under the cursor   */
+    --t-ui:160ms;          /* chrome arriving, sliding  */
+    --t-state:200ms;       /* a state changing          */
+    --t-reveal:300ms;      /* something appearing       */
+    --t-enter:380ms;       /* the document arriving     */
+    --t-hero:450ms;
+    --ease-out:cubic-bezier(.22,1,.36,1);
+    --ease-ui:ease;
   }
-  body.theme-chanel{ --paper:#faf9f6; --rail:#eeece4; --accent:#8c7853; }   /* Chanel: warm paper + gold */
-  body.theme-warm{ --paper:#faf9f6; --rail:#efece3; --accent:#b5895a; }     /* warm paper + amber */
+
+  /* ═════════════════════════════════════════════════════════════════════════════
+     RECUT-SPECIFIC — role mappings and page furniture. Does not travel.
+
+     These sit on `body`, not on `:root`, on purpose. A custom property is
+     substituted on the element that DECLARES it, so `--rail:var(--ground)` on
+     :root would freeze the default --ground and the body.theme-* overrides below
+     would silently stop reaching the rail. Declaring both on body keeps them on
+     one element, where the theme class wins on specificity. Don't tidy these up
+     into the fence above.
+     ═════════════════════════════════════════════════════════════════════════════ */
+  body{
+    --accent:#ff352a;
+    --maxw:940px;
+    /* The rail is chrome, the paper is document — so the rail takes the ramp's
+       dark half, under the --rail-* names the rest of this file already reads. */
+    --rail:var(--ground);
+    --rail-text:var(--bright);
+    --rail-dim:var(--dim);
+    --rail-rule:var(--ground-rule);
+    --rail-hover:var(--ground-lift);
+    --rail-active:var(--ground-lift-2);
+    /* The rail's slide is a GPU transform; the document's inset is padding, which relayouts
+       the whole résumé every frame. On a long CV the reflow can't keep up, so the panel
+       always lands first. Rather than two motions out of step, the layout snaps in one
+       frame and only opacity animates — opacity costs no layout, so nothing can lag. */
+    --rail-ms:var(--t-ui); --rail-ease:var(--ease-ui);
+  }
+  /* Themes move the RAMP, not the roles: the near-black is warmed toward each
+     theme's accent rather than going neutral, and the rail follows on its own. */
+  /* Chanel: gold #8c7853, hue ~40° */
+  body.theme-chanel{ --paper:#faf9f6; --accent:#8c7853;
+    --ground:#141310; --bright:#e8e3d8; --dim:#989286; }
+  /* Warm: amber #b5895a, hue ~31° */
+  body.theme-warm{ --paper:#faf9f6; --accent:#b5895a;
+    --ground:#14120e; --bright:#e8e0d5; --dim:#9a9086; }
   /* optional full-screen video hero (set heroVideo in the data file) */
   .herovideo{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.06; z-index:1;}
   body.has-video #art{opacity:0;}     /* video shows on screen; canvas stays sized for print fallback */
 
   *{box-sizing:border-box;}
   html{-webkit-text-size-adjust:100%;}
+
+  /* Scrollbars: thin, no track chrome, thumb tinted from --ink so it belongs to the page
+     rather than to the OS. Kept visible rather than hover-only — a scrollbar is a
+     signifier that there's more to read, and hiding it removes that. */
+  html{scrollbar-width:thin; scrollbar-color:rgba(17,17,16,.20) transparent;}
+  html::-webkit-scrollbar{width:10px; height:10px;}
+  html::-webkit-scrollbar-track{background:transparent;}
+  html::-webkit-scrollbar-thumb{background:rgba(17,17,16,.18); border-radius:8px;
+    border:3px solid transparent; background-clip:content-box;}
+  html::-webkit-scrollbar-thumb:hover{background:rgba(17,17,16,.34); background-clip:content-box;}
   body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--serif); line-height:1.5; -webkit-font-smoothing:antialiased;}
 
-  /* toolbar + back link */
-  .toolbar{position:fixed; top:16px; right:16px; z-index:50; display:flex; gap:8px;}
-  .toolbar button{font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:rgba(17,17,16,.82); color:#f7f6f2; border:none; padding:9px 12px; border-radius:2px; cursor:pointer; backdrop-filter:blur(6px); transition:background .15s ease;}
-  .toolbar button:hover{background:var(--ink);}
+  /* ── floating chrome: glass pills ──────────────────────────────────────
+     This is where the haze earns its keep: small, floating, with content that
+     actually moves
+     underneath — the black hero, then paper. A blur over something is worth
+     compositing; a blur over a flat field is not, which is why the rail below
+     takes the gradient and no blur at all.
+
+     Dark rather than near-white because one pill has to stay legible over both
+     grounds without changing: a light pill reads as paper over paper and as a
+     hole over the hero. Same blur, same three hues, same budget as the light
+     card at .rc — one material, two grounds (Pillar 7).
+
+     Measured: the light text sits at ≥ 9:1 at every point of the gradient, over
+     any backdrop. One type size per component. */
+  .toolbar{position:fixed; top:var(--s-4); right:var(--s-4); z-index:50; display:flex; gap:var(--s-2);}
+  .toolbar button, .backlink, .cuts__open{
+    font-family:var(--mono); font-size:var(--fs-ui); letter-spacing:.04em; text-transform:uppercase;
+    color:var(--paper); border:none; padding:var(--s-2) var(--s-3); border-radius:var(--r-btn);
+    background-color:var(--glass-dark); background-image:var(--haze-dark);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07);   /* the lit top edge, not a shadow */
+    transition:background-color var(--t-hover) var(--ease-ui);}
+  .toolbar button{cursor:pointer;}
+  .toolbar button:hover, .backlink:hover, .cuts__open:hover{background-color:var(--ink);}
   .toolbar button:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
-  .backlink{position:fixed; top:16px; left:16px; z-index:50; font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase; background:rgba(17,17,16,.82); color:#f7f6f2; text-decoration:none; padding:9px 12px; border-radius:2px; backdrop-filter:blur(6px); transition:background .15s ease;}
-  .backlink:hover{background:var(--ink);}
+  .backlink{position:fixed; top:var(--s-4); left:var(--s-4); z-index:50; text-decoration:none;}
   /* The cuts rail owns the top-left corner, so the optional back link steps aside:
      clear of the open panel, or clear of the launcher when it's collapsed. */
   body.has-cuts .backlink{left:280px;}
-  body.has-cuts.cuts-collapsed .backlink{left:82px;}
+  body.has-cuts.cuts-collapsed .backlink{left:80px;}
 
   /* ── cuts panel ───────────────────────────────────────────────────────────────
      A quiet left rail listing every cut. Built from the page's own materials —
@@ -51,141 +196,210 @@
      rather than as app chrome bolted on. Never printed.
      Below 1340px there isn't room beside the centred page, so it collapses to a
      small launcher and slides over. */
-  .cuts{position:fixed; left:0; top:0; bottom:0; width:264px; z-index:60;
-    padding:26px 18px 20px; overflow-y:auto; box-sizing:border-box;
+  /* Every value here is divisible by 4 (8 between groups, 4 inside a row) — off-grid
+     numbers are the fastest tell of an unpolished panel. Two type sizes only: 12px for
+     things you click, 10px for labels that name them. */
+  .cuts{position:fixed; left:0; top:0; bottom:0; width:264px;   /* 33 × 8 */ z-index:60;
+    padding:var(--s-5) var(--s-4); overflow-y:auto; box-sizing:border-box;
     display:flex; flex-direction:column;
-    background:var(--rail); border-right:1px solid var(--rule); font-family:var(--mono);}
+    /* Opaque, and haze WITHOUT blur. The document is inset beside this panel
+       rather than passing under it, so there is nothing here for a
+       backdrop-filter to refract — it would re-rasterise a full-height backdrop
+       every scroll frame to return the same flat field. The gradient gives the
+       rail the haze's signature for free: it paints once and costs nothing. */
+    background-color:var(--rail); background-image:var(--haze-dark);
+    border-right:1px solid var(--rail-rule); font-family:var(--mono);
+    transition:opacity var(--rail-ms) var(--rail-ease);
+    scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.18) transparent;}
+  .cuts::-webkit-scrollbar{width:8px;}
+  .cuts::-webkit-scrollbar-track{background:transparent;}
+  .cuts::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16); border-radius:8px;
+    border:2px solid transparent; background-clip:content-box;}
+  .cuts:hover::-webkit-scrollbar-thumb{background:rgba(255,255,255,.30); background-clip:content-box;}
   .cuts__head{display:flex; align-items:center; justify-content:space-between;
-    font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--rail-dim);
-    padding:0 8px 12px;}
-  .cuts__min{border:none; background:none; cursor:pointer; color:var(--rail-dim); padding:0 0 0 8px;
-    font-family:var(--mono); font-size:14px; line-height:1;}
-  .cuts__min:hover{color:var(--ink);}
+    font-size:var(--fs-label); letter-spacing:.16em; text-transform:uppercase; color:var(--rail-dim);
+    padding:0 var(--s-3) var(--s-4);}
+  /* Round, haze on hover, and a real hit target: a 12px glyph with 4px of padding
+     was a ~20px target, well under the ~44px the guidelines ask for. The button is
+     sized properly and pulled back out with a negative margin so the header's
+     optical alignment doesn't move. */
+  .cuts__min, .cuts__close{border:none; background:none; cursor:pointer; color:var(--rail-dim);
+    font-family:var(--mono); font-size:var(--fs-ctl); line-height:1;
+    width:32px; height:32px; display:grid; place-items:center; border-radius:var(--r-btn);
+    transition:background-color var(--t-hover) var(--ease-ui), color var(--t-hover) var(--ease-ui);}
+  .cuts__min{margin:-8px -8px -8px 0;}
+  .cuts__min:hover, .cuts__close:hover{color:var(--rail-text);
+    background-color:var(--rail-active); background-image:var(--haze-dark);}
   /* Group headings carry a rule so the eye finds the breaks before it reads the words —
      with a dozen cuts the list is scanned, not read. */
-  .cuts__group{font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--rail-text);
-    padding:9px 8px 6px; margin-top:12px; border-top:1px solid var(--rule);}
-  .cuts a{display:block; font-size:11.5px; letter-spacing:.01em; line-height:1.35;
-    color:var(--rail-text); text-decoration:none; padding:6px 8px; border-radius:2px;
-    transition:background .12s ease, color .12s ease;}
-  .cuts a + a{margin-top:1px;}
-  .cuts a:hover{color:var(--ink); background:rgba(17,17,16,.07);}
-  .cuts a.active{color:var(--ink); background:rgba(17,17,16,.09); font-weight:700;}
+  .cuts__group{font-size:var(--fs-label); letter-spacing:.13em; text-transform:uppercase; color:var(--rail-dim);
+    padding:var(--s-3) var(--s-3) var(--s-2); margin-top:var(--s-4); border-top:1px solid var(--rail-rule);}
+  /* Rows, not buttons: rounded (--r-md) and haze only while hovered or selected,
+     so the list still scans as a list. Hover and active both promote the text to
+     --rail-text, which is why --rail-dim never has to clear 4.5:1 on a lifted row. */
+  .cuts a{display:block; font-size:var(--fs-ctl); letter-spacing:.01em; line-height:1.4;
+    color:var(--rail-dim); text-decoration:none; padding:var(--s-2) var(--s-3); border-radius:var(--r-md);
+    background-image:none;
+    transition:background-color var(--t-hover) var(--ease-ui), color var(--t-hover) var(--ease-ui);}
+  .cuts a + a{margin-top:2px;}
+  .cuts a:hover{color:var(--rail-text); background-color:var(--rail-hover); background-image:var(--haze-dark);}
+  .cuts a.active{color:var(--rail-text); background-color:var(--rail-active); background-image:var(--haze-dark); font-weight:700;}
   /* keyboard users need to see where they are, and the rail is a list of links */
   .cuts a:focus-visible, .cuts__act:focus-visible, .cuts__min:focus-visible,
-  .cuts__close:focus-visible, .cuts__link:focus-visible, .cuts__open:focus-visible{
-    outline:2px solid var(--ink); outline-offset:2px;}
+  .cuts__close:focus-visible, .cuts__link:focus-visible{
+    outline:2px solid var(--rail-text); outline-offset:2px;}
+  .cuts__open:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
 
   /* collapsed on purpose, at any width */
-  body.cuts-collapsed .cuts{transform:translateX(-100%); transition:transform .2s ease;}
-  body.cuts-collapsed .cuts__open{display:block;}
+  body.cuts-collapsed .cuts{transform:translateX(-100%); opacity:0;}
+  body.cuts-collapsed .cuts__open{opacity:1; visibility:visible;
+    transition:opacity var(--rail-ms) var(--rail-ease), visibility 0s;}
 
   /* The rail is fixed, so give the document a matching inset instead of letting the panel
      sit on top of it. The résumé then re-centres in what's left, which is what makes the
      rail read as part of the layout rather than a thing floating over the page. */
-  body{transition:padding-left .22s cubic-bezier(.22,1,.36,1);}
+  /* No transition here on purpose — see the note by --rail-ms. The inset snaps in the same
+     frame the panel does, which is what makes them read as one change. */
   body.has-cuts{padding-left:264px;}
   body.has-cuts.cuts-collapsed{padding-left:0;}
   body.paged-ready{padding-left:0 !important;}   /* the paged view owns the whole sheet */
-  .cuts__actions{margin-top:14px; padding-top:12px; border-top:1px solid var(--rule); display:flex;
+  .cuts__actions{margin-top:var(--s-4); padding-top:var(--s-3); border-top:1px solid var(--rail-rule); display:flex;
     flex-direction:column; gap:2px;}
+  /* Ghost buttons, per the reference: no background until hover (Pillar 3). */
   .cuts__act{display:block; width:100%; text-align:left; border:none; background:none; cursor:pointer;
-    font-family:var(--mono); font-size:11.5px; letter-spacing:.02em; color:var(--rail-text);
-    padding:6px 8px; border-radius:2px; transition:background .12s ease, color .12s ease;}
-  .cuts__act:hover{color:var(--ink); background:rgba(17,17,16,.07);}
-  .cuts__foot{margin-top:auto; padding:14px 8px 0; border-top:1px solid var(--rule);}
-  .cuts__hint{font-size:10.5px; line-height:1.55; color:var(--rail-dim);}
+    font-family:var(--mono); font-size:var(--fs-ctl); letter-spacing:.02em; color:var(--rail-dim);
+    padding:var(--s-2) var(--s-3); border-radius:var(--r-md);
+    transition:background-color var(--t-hover) var(--ease-ui), color var(--t-hover) var(--ease-ui);}
+  .cuts__act:hover{color:var(--rail-text); background-color:var(--rail-hover); background-image:var(--haze-dark);}
+  .cuts__foot{margin-top:auto; padding:var(--s-4) var(--s-3) 0; border-top:1px solid var(--rail-rule);}
+  .cuts__hint{font-size:var(--fs-label); line-height:1.6; color:var(--rail-dim);}
   .cuts__hint code{font-family:var(--mono); color:var(--rail-text);}
-  .cuts__link{display:inline-block; margin-top:9px; font-size:10.5px; letter-spacing:.08em;
+  .cuts__link{display:inline-block; margin-top:var(--s-3); font-size:var(--fs-label); letter-spacing:.08em;
     text-transform:uppercase; color:var(--rail-text); text-decoration:none;
-    border-bottom:1px solid var(--rail-dim); padding:0 0 1px;}
-  .cuts__link:hover{color:var(--ink); border-bottom-color:var(--ink);}
+    border-bottom:1px solid var(--rail-rule); padding:0 0 1px;}
+  .cuts__link:hover{border-bottom-color:var(--rail-text);}
   /* says out loud whether the cut buttons can write files, so nobody wonders why the
      button is called "Download starter file" */
-  .cuts__mode{display:flex; align-items:center; gap:6px; margin-top:12px;
-    font-size:10px; letter-spacing:.09em; text-transform:uppercase; color:var(--rail-dim);}
-  .cuts__mode::before{content:""; width:6px; height:6px; border-radius:50%;
+  .cuts__mode{display:flex; align-items:center; gap:var(--s-2); margin-top:var(--s-3);
+    font-size:var(--fs-label); letter-spacing:.09em; text-transform:uppercase; color:var(--rail-dim);}
+  .cuts__mode::before{content:""; width:var(--s-2); height:var(--s-2); border-radius:50%;
     background:var(--rail-dim); flex:0 0 auto;}
-  /* colour is never the only signal — the wording says which mode it is too */
-  .cuts__mode.on::before{background:#2f6b3d;}
+  /* colour is never the only signal — the wording says which mode it is too.
+     Lightened for the dark ground: #2f6b3d disappears against near-black. */
+  .cuts__mode.on::before{background:#6cbf87;}
   .cuts__mode.on{color:var(--rail-text);}
   .cuts__close{display:none;}
 
   /* dialog for the two things a static page genuinely can do: build you a starter file,
      and write the instruction you'd otherwise have to remember. */
+  /* The one LIGHT glass in the app, and the closest thing here to the reference:
+     small, transient, floating over the whole document with real content behind
+     it. Light rather than dark because it holds form fields, and a second input
+     theme for one card isn't worth owning. The blur is composited only while the
+     dialog is open, so it never touches scroll or the export.
+
+     Two type sizes: --fs-ctl for what you read and type, --fs-label for what
+     names it. The title drops to --fs-label and gains tracking rather than
+     becoming a third size (Pillar 5: weight, colour or spacing before a size).
+
+     Labels and notes moved off --faint and --muted, which were at 2.6:1 and
+     4.3:1 on paper — failing AA before any glass was involved. Input borders
+     moved to --muted for the 3:1 a field boundary owes as a UI component. */
   .rc{position:fixed; inset:0; z-index:80; display:flex; align-items:center; justify-content:center;
-    background:rgba(17,17,16,.42); padding:20px;}
-  .rc__card{width:100%; max-width:460px; background:var(--paper); border-radius:4px; padding:22px;
+    background:rgba(17,17,16,.42); padding:var(--s-5);}
+  .rc__card{width:100%; max-width:460px; border-radius:var(--r-lg); padding:var(--s-5);
+    background-color:var(--glass-light); background-image:var(--haze-light);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    border:1px solid rgba(255,255,255,.55);
     box-shadow:0 20px 60px rgba(0,0,0,.28); font-family:var(--mono);}
-  .rc__title{font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--faint);
-    margin:0 0 14px;}
-  .rc label{display:block; font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-    color:var(--faint); margin:12px 0 5px;}
-  .rc input, .rc textarea{width:100%; box-sizing:border-box; font-family:var(--mono); font-size:12px;
-    color:var(--ink); background:#fff; border:1px solid var(--rule); border-radius:2px; padding:8px 9px;
-    outline:none;}
-  .rc input:focus, .rc textarea:focus{border-color:var(--muted);}
-  .rc textarea{min-height:84px; resize:vertical; line-height:1.45;}
-  .rc__note{font-size:10px; line-height:1.6; color:var(--muted); margin:14px 0 0;}
-  .rc__note code{background:rgba(17,17,16,.06); padding:1px 5px; border-radius:2px;}
-  .rc__row{display:flex; gap:8px; margin-top:18px; flex-wrap:wrap;}
-  .rc__btn{flex:1 1 auto; border:none; cursor:pointer; font-family:var(--mono); font-size:10px;
-    letter-spacing:.08em; text-transform:uppercase; padding:10px 12px; border-radius:2px;
-    background:var(--ink); color:var(--paper);}
-  .rc__btn--ghost{background:none; color:var(--muted); border:1px solid var(--rule);}
-  .rc__btn--ghost:hover{color:var(--ink); border-color:var(--muted);}
+  .rc__title{font-size:var(--fs-label); letter-spacing:.18em; text-transform:uppercase;
+    color:var(--ink-dim); margin:0 0 var(--s-4);}
+  .rc label{display:block; font-size:var(--fs-label); letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-dim); margin:var(--s-3) 0 var(--s-1);}
+  .rc input, .rc textarea{width:100%; box-sizing:border-box; font-family:var(--mono); font-size:var(--fs-ctl);
+    color:var(--ink); background:#fff; border:1px solid var(--muted); border-radius:var(--r-btn);
+    padding:var(--s-2); outline:none;
+    transition:border-color var(--t-hover) var(--ease-ui), box-shadow var(--t-hover) var(--ease-ui);}
+  .rc input:focus, .rc textarea:focus{border-color:var(--ink); box-shadow:0 0 0 3px rgba(17,17,16,.10);}
+  .rc textarea{min-height:88px; resize:vertical; line-height:1.45;}
+  .rc__note{font-size:var(--fs-label); line-height:1.6; color:var(--ink-dim); margin:var(--s-4) 0 0;}
+  .rc__note code{background:rgba(17,17,16,.08); padding:1px var(--s-1); border-radius:var(--r-sm);}
+  .rc__row{display:flex; gap:var(--s-2); margin-top:var(--s-4); flex-wrap:wrap;}
+  /* Pill, and the haze over opaque ink rather than over glass: a glass button on a
+     glass card is mush, and the primary action has to stay the one obviously
+     loudest thing on the card (Pillar 2). No blur — nothing shows through ink. */
+  .rc__btn{flex:1 1 auto; border:none; cursor:pointer; font-family:var(--mono); font-size:var(--fs-label);
+    letter-spacing:.08em; text-transform:uppercase; padding:var(--s-2) var(--s-4); border-radius:var(--r-btn);
+    background-color:var(--ink); background-image:var(--haze-dark); color:var(--paper);
+    transition:background-color var(--t-hover) var(--ease-ui), border-color var(--t-hover) var(--ease-ui),
+      color var(--t-hover) var(--ease-ui);}
+  .rc__btn:hover{background-color:#000;}
+  /* Secondary stays a ghost so the pair keeps a hierarchy; it picks the haze up on hover. */
+  .rc__btn--ghost{background-color:transparent; background-image:none; color:var(--ink-dim); border:1px solid var(--muted);}
+  .rc__btn--ghost:hover{color:var(--ink); border-color:var(--ink);
+    background-color:var(--glass-light); background-image:var(--haze-light);}
+  /* Fields carry their own focus state (border → --ink plus a ring), so an
+     outline on top of that is a third mark for one event. Buttons have no
+     border to darken, so they keep the outline. */
+  .rc__btn:focus-visible{outline:2px solid var(--ink); outline-offset:2px;}
 
   /* collapsed mode: launcher pill, panel slides over the page */
-  .cuts__open{position:fixed; left:16px; top:16px; z-index:59; display:none; cursor:pointer; border:none;
-    font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase;
-    background:rgba(17,17,16,.82); color:#f7f6f2; padding:9px 12px; border-radius:2px;
-    backdrop-filter:blur(6px);}
-  .cuts__open:hover{background:var(--ink);}
+  /* Fades rather than display:none, so it can cross with the panel instead of popping in
+     after it. It waits until the rail is roughly half-gone before appearing. */
+  /* Shares the pill rule up at .toolbar; this is only what the launcher owns. */
+  .cuts__open{position:fixed; left:var(--s-4); top:var(--s-4); z-index:59; cursor:pointer;
+    opacity:0; visibility:hidden;
+    transition:opacity var(--t-ui) var(--ease-ui), visibility 0s linear var(--t-ui),
+      background-color var(--t-hover) var(--ease-ui);}
   /* Because the document is inset rather than covered, the rail can stay open much
      further down: 940px page + 264px rail + margins needs ~1284. Below that there is no
      room to give, so it goes back to sliding over the page. */
   @media (max-width:1280px){
-    body.has-cuts, body.has-cuts.cuts-open{padding-left:0;}
-  }
-  @media (max-width:1280px){
-    .cuts{transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 0 40px rgba(0,0,0,.14);}
-    body.cuts-open .cuts{transform:none;}
-    .cuts__open{display:block;}
-    body.cuts-open .cuts__open{display:none;}
-    .cuts__close{display:block; position:absolute; right:10px; top:10px; border:none; background:none;
-      cursor:pointer; color:var(--faint); font-family:var(--mono); font-size:14px; line-height:1; padding:4px;}
-    .cuts__close:hover{color:var(--ink);}
+    body.has-cuts, body.has-cuts.cuts-open{padding-left:0;}   /* no room to give — slide over instead */
+    .cuts{transform:translateX(-100%); opacity:0; box-shadow:0 0 40px rgba(0,0,0,.14);}
+    body.cuts-open .cuts{transform:none; opacity:1;}
+    body:not(.cuts-open) .cuts__open{opacity:1; visibility:visible;
+      transition:opacity var(--rail-ms) var(--rail-ease), visibility 0s;}
+    /* right:0 is the panel's padding box, so the 32px box's optical centre lands
+       on the 16px side padding and the 24px top padding exactly. */
+    .cuts__close{display:grid; position:absolute; right:0; top:var(--s-2);}
     .cuts__min{display:none;}                 /* narrow screens already have ✕ */
-    body.has-cuts .backlink{left:82px;}
+    body.has-cuts .backlink{left:80px;}
     body.has-cuts.cuts-open .backlink{left:280px;}
   }
 
   /* first-run strip — only while the example data is still in place. Removes itself
      the moment someone puts their own name in cv-data.js. */
+  /* The strip itself stays flat ink: it is instructional and temporary, and
+     giving it material would make it read as permanent furniture. Its button is
+     a haze pill like every other button. */
   .firstrun{position:fixed; left:0; right:0; bottom:0; z-index:70; display:flex; align-items:center;
-    gap:14px; padding:11px 16px; background:var(--ink); color:#f4f2ea;
-    font-family:var(--mono); font-size:11px; letter-spacing:.02em; line-height:1.45;}
-  .firstrun code{color:#fff; background:rgba(255,255,255,.12); padding:1px 5px; border-radius:2px;}
+    gap:var(--s-4); padding:var(--s-3) var(--s-4); background:var(--ink); color:#f4f2ea;
+    font-family:var(--mono); font-size:var(--fs-ui); letter-spacing:.02em; line-height:1.45;}
+  .firstrun code{color:#fff; background:rgba(255,255,255,.12); padding:1px var(--s-1); border-radius:var(--r-sm);}
   .firstrun span{flex:1;}
-  .firstrun button{flex:0 0 auto; border:none; background:rgba(255,255,255,.14); color:#f4f2ea;
-    font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
-    padding:7px 11px; border-radius:2px; cursor:pointer;}
-  .firstrun button:hover{background:rgba(255,255,255,.24);}
+  .firstrun button{flex:0 0 auto; border:none; color:#f4f2ea;
+    font-family:var(--mono); font-size:var(--fs-label); letter-spacing:.08em; text-transform:uppercase;
+    padding:var(--s-2) var(--s-3); border-radius:var(--r-btn); cursor:pointer;
+    background-color:var(--ground-lift-2); background-image:var(--haze-dark);
+    transition:background-color var(--t-hover) var(--ease-ui);}
+  .firstrun button:hover{background-color:rgba(255,255,255,.24);}
+  .firstrun button:focus-visible{outline:2px solid #f4f2ea; outline-offset:2px;}
 
   /* ── changing cuts ────────────────────────────────────────────────────────────
      Switching cut is a real page load, which flashes white. Fade the document out
      before navigating and let it rise back in on arrival, so a cut reads as a change
      of state rather than a reload. The rail itself never moves — it's the fixed thing
      the document changes behind. Print and reduced-motion opt out below. */
-  .hero, main, footer{transition:opacity .19s ease;}
+  .hero, main, footer{transition:opacity var(--t-state) var(--ease-ui);}
   body.leaving .hero, body.leaving main, body.leaving footer{opacity:0;}
   @keyframes cutRise{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;}}
   @keyframes cutFade{from{opacity:0;} to{opacity:1;}}
-  body:not(.paged-ready) main{animation:cutRise .38s cubic-bezier(.22,1,.36,1) both;}
-  body:not(.paged-ready) .hero{animation:cutFade .45s ease both;}
+  body:not(.paged-ready) main{animation:cutRise var(--t-enter) var(--ease-out) both;}
+  body:not(.paged-ready) .hero{animation:cutFade var(--t-hero) var(--ease-ui) both;}
   .cuts a{position:relative;}
-  .cuts a.active::before{content:""; position:absolute; left:0; top:6px; bottom:6px; width:2px;
-    background:var(--accent); animation:cutFade .3s ease both;}
+  .cuts a.active::before{content:""; position:absolute; left:0; top:var(--s-1); bottom:var(--s-1); width:2px;
+    background:var(--accent); animation:cutFade var(--t-reveal) var(--ease-ui) both;}
 
   /* hero */
   .hero{position:relative; background:#000; color:#fff; overflow:hidden;}
@@ -260,10 +474,25 @@
     .row{grid-template-columns:1fr auto;} .row .when{grid-column:1 / -1;}
     .skills{grid-template-columns:1fr;}
   }
+  /* Transparency is a preference too — and the honest escape hatch for the blur.
+     Where it's reduced, every glass surface goes opaque and no backdrop-filter is
+     composited at all. Measured there as well: --ink-dim holds 6.2:1 on paper. */
+  @media (prefers-reduced-transparency:reduce){
+    .toolbar button, .backlink, .cuts__open{
+      background-color:var(--ink); background-image:none;
+      backdrop-filter:none; -webkit-backdrop-filter:none;}
+    .rc__card{background-color:var(--paper); background-image:none;
+      backdrop-filter:none; -webkit-backdrop-filter:none;}
+    .rc__btn--ghost:hover{background-color:var(--paper); background-image:none;}
+    .cuts{background-image:none;}
+    .cuts a:hover, .cuts a.active, .cuts__act:hover,
+    .cuts__min:hover, .cuts__close:hover, .rc__btn, .firstrun button{background-image:none;}
+  }
   @media (prefers-reduced-motion:reduce){
     .reveal{opacity:1; transform:none; transition:none;}
     .hero, main, footer{transition:none;}
     body:not(.paged-ready) main, body:not(.paged-ready) .hero, .cuts a.active::before{animation:none;}
+    body, .cuts, .cuts__open{transition:none;}
   }
 
   /* ── Paged.js download mode (on-demand pagination — see exportPDF() in the script) ──
@@ -283,8 +512,9 @@
   /* print fallback: if Paged.js can't load we still get a usable native print (no @page here so
      Paged.js's own injected @page wins in the paged path; the cover stays full-cover via .hero). */
   @media print{
-    .toolbar,.backlink,.cuts,.cuts__open,.firstrun{display:none !important;}
+    .toolbar,.backlink,.cuts,.cuts__open,.firstrun,.rc{display:none !important;}
     .hero,main,footer{opacity:1 !important; animation:none !important; transition:none !important;}
+    body{padding-left:0 !important;}          /* the rail's inset must never reach paper */
     body{background:#fff; display:flex; flex-direction:column; min-height:100vh;}
     footer{margin-top:auto; padding:10px 0 0; border-top:1px solid var(--rule);}  /* pin to bottom of last page */
     .hero{page:cover; break-after:page; page-break-after:always; background:#000 !important; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
@@ -501,6 +731,7 @@ body.no-hero .pagedjs_page main > section:first-child .sec-head { border-top: no
 .pagedjs_page .cuts,
 .pagedjs_page .cuts__open,
 .pagedjs_page .firstrun,
+.pagedjs_page .rc,
 .pagedjs_page .backlink { display: none !important; }
 </script>
 
@@ -702,7 +933,7 @@ function renderCuts(){
     panel.querySelectorAll('a[data-role]').forEach(function(x){ x.classList.remove('active'); });
     a.classList.add('active');
     document.body.classList.add('leaving');
-    setTimeout(swap, 185);
+    setTimeout(swap, 205);   /* must outlast --t-state on .hero/main/footer */
   });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape') document.body.classList.remove('cuts-open');
