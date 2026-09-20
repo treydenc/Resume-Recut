@@ -194,8 +194,15 @@ function listen(port, attempt = 0) {
                 `${DIM}      writes enabled — "+ New cut" and "Remove cut" edit real files${OFF}\n` +
                 `${DIM}      ctrl-c to stop${OFF}\n`);
     if (OPEN) {
-      const cmd = platform === "win32" ? "start" : platform === "darwin" ? "open" : "xdg-open";
-      try { spawn(cmd, [url], { shell: platform === "win32", stdio: "ignore", detached: true }).unref(); } catch (e) {}
+      // No `shell: true`. Node 22 warns DEP0190 for it, and the warning says
+      // "security vulnerabilities" — not the first thing this should print.
+      // `start` is a cmd builtin, so on Windows invoke cmd directly. Its first
+      // quoted argument is the window title, hence the empty string: without it
+      // `start "http://..."` opens a console titled with the URL and no browser.
+      const [cmd, args] = platform === "win32"
+        ? ["cmd.exe", ["/c", "start", "", url]]
+        : [platform === "darwin" ? "open" : "xdg-open", [url]];
+      try { spawn(cmd, args, { stdio: "ignore", detached: true }).unref(); } catch (e) {}
     }
   });
 }

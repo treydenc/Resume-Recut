@@ -19,6 +19,10 @@ cv.html?role=engineering   the engineering cut
 
 Same data. Different argument.
 
+![The same resume rendered as the engineering cut, then the product cut. The Atlas entry keeps its facts and changes its case.](docs/demo.gif)
+
+*The example resume that ships with the repo. Nothing in either cut was typed twice. The [full clip](docs/demo.mp4) runs through the PDF export.*
+
 ---
 
 ## How it works
