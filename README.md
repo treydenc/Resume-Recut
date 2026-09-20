@@ -1,4 +1,4 @@
-# recut
+# Resume-Recut
 
 **One resume. Many true versions of you. No build step.**
 
@@ -8,8 +8,8 @@ one candidate. You are a plausible product designer *and* a plausible design eng
 *and* a plausible researcher, and the honest version of you changes depending on who
 is reading.
 
-Most resume tools make you keep four Google Docs in sync. `recut` keeps one source of
-truth and lets you draw a different true version from it for every application.
+Most resume tools make you keep four Google Docs in sync. Resume-Recut keeps one source
+of truth and lets you draw a different true version from it for every application.
 
 ```
 cv.html                    the full resume
